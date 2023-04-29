@@ -1,0 +1,43 @@
+name: release
+
+on:
+  push:
+    tags:
+      - v*.*.*
+
+jobs:
+  release:
+    name: Create a Github release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      checks: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - uses: actions-rs/install@v0.1
+        with:
+          crate: convco
+          version: latest
+      - uses: actions-rs/install@v0.1
+        with:
+          crate: cargo-release
+          version: latest
+      - name: Create changelog
+        run: convco changelog > CHANGELOG.md
+      - name: Build binary
+        run: cargo build -r
+      - name: Generate checksums
+        run: |
+          cd target/release
+          sha256sum runo > checksum.txt
+      - name: Create Github release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "target/release/runo,target/release/checksum.txt"
+          bodyFile: "CHANGELOG.md"

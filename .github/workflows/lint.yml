@@ -1,0 +1,47 @@
+name: lint
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  fmt:
+    name: Check format with fmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - run: cargo fmt --check
+  clippy:
+    name: Check with clippy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - uses: actions/checkout@v3
+      - run: rustup component add clippy
+      - uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+  conventional-commit:
+    name: Check if all commits are conventional
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - uses: actions-rs/install@v0.1
+        with:
+          crate: convco
+          version: latest
+      - name: Check if all commits are conventional
+        run: |
+          convco check
