@@ -51,9 +51,12 @@ jobs:
           override: true
       - name: Build binary
         run: cargo build
+      - name: Compress binary
+        run: zip target/debug/runo.zip target/debug/runo
       - name: Archive artifacts
         uses: actions/upload-artifact@v3
         with:
           name: binary
-          path: target/debug/runo
+          path: target/debug/runo.zip
+          retention-days: 30
       
