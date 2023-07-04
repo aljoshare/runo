@@ -1,6 +1,6 @@
 ![Logo for rūnō](assets/logo.png)
 
-# rūnō - A Secrets Generator for Kubernetes
+# rūnō - A Secret Generator for Kubernetes
 
 While navigating the great ocean of Kubernetes and spinning up cluster after cluster and environment after environment, a little help is very welcome. rūnō is helping you with the in-cluster generation of secret strings. If no external storage of secrets is needed or desired, and you only want to have a random string for e.g. a database password, a user password or a replica set key, this controller is maybe helpful to you. 
 It supports:
