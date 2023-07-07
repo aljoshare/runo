@@ -1,9 +1,12 @@
 use crate::{annotations, cron, secrets};
 use k8s_openapi::api::core::v1::Secret;
 use kube::runtime::controller::Action;
-use kube::ResourceExt;
+use kube::runtime::Controller;
+use kube::{Api, Client, ResourceExt};
 use std::sync::Arc;
 use std::time::Duration;
+
+use futures::StreamExt;
 use tracing::{debug, info};
 
 #[derive(thiserror::Error, Debug)]
@@ -39,6 +42,17 @@ pub(crate) async fn reconcile(obj: Arc<Secret>, _ctx: Arc<()>) -> Result<Action>
 
 pub(crate) fn error_policy(_object: Arc<Secret>, _err: &Error, _ctx: Arc<()>) -> Action {
     Action::requeue(Duration::from_secs(5))
+}
+
+pub async fn run() {
+    let client = Client::try_default().await.unwrap();
+    let secrets = Api::<Secret>::all(client);
+    Controller::new(secrets.clone(), Default::default())
+        .shutdown_on_signal()
+        .run(reconcile, error_policy, Arc::new(()))
+        .filter_map(|x| async move { std::result::Result::ok(x) })
+        .for_each(|_| futures::future::ready(()))
+        .await;
 }
 
 #[cfg(test)]
