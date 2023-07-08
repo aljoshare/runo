@@ -2,12 +2,13 @@ use crate::{annotations, cron, secrets};
 use k8s_openapi::api::core::v1::Secret;
 use kube::runtime::controller::Action;
 use kube::runtime::Controller;
-use kube::{Api, Client, ResourceExt};
+use kube::{Api, ResourceExt};
 use std::sync::Arc;
 use std::time::Duration;
 
+use crate::kube::get_client;
 use futures::StreamExt;
-use tracing::{debug, info};
+use tracing::info;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {}
@@ -15,27 +16,9 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 pub(crate) async fn reconcile(obj: Arc<Secret>, _ctx: Arc<()>) -> Result<Action> {
     info!("reconcile request: {}", obj.name_any());
-    let id = "0";
-    if annotations::has_our_annotations(&obj, id) {
-        if !annotations::already_generated(&obj, id) {
-            debug!(
-                "{:?} needs to be generated because not generated yet",
-                obj.name_any()
-            );
-            let key = annotations::get_key(&obj, id);
-            let value = secrets::generate_random_string(&obj, id);
-            secrets::update(&obj, id, key, value).await;
-        }
-        if annotations::has_cron(&obj, id) {
-            debug!("CronJob for {:?} needs to be created", obj.name_any());
-            cron::apply(&obj, id).await
-        }
-        if annotations::needs_regeneration(&obj, id) {
-            debug!("{:?} needs to be regenerated", obj.name_any());
-            let key = annotations::get_key(&obj, id);
-            let value = secrets::generate_random_string(&obj, id);
-            secrets::update(&obj, id, key, value).await;
-        }
+    if annotations::has_our_annotations(&obj) {
+        secrets::update(&obj).await;
+        cron::update(&obj).await
     }
     Ok(Action::requeue(Duration::from_secs(3600)))
 }
@@ -45,7 +28,7 @@ pub(crate) fn error_policy(_object: Arc<Secret>, _err: &Error, _ctx: Arc<()>) ->
 }
 
 pub async fn run() {
-    let client = Client::try_default().await.unwrap();
+    let client = get_client().await;
     let secrets = Api::<Secret>::all(client);
     Controller::new(secrets.clone(), Default::default())
         .shutdown_on_signal()
@@ -64,14 +47,16 @@ mod tests {
     use kube::api::{DeleteParams, PostParams};
     use kube::config::KubeConfigOptions;
 
-    use kube::{Api, Client, Config, ResourceExt};
+    use kube::{Api, Client, Config};
     use regex::Regex;
     use std::collections::BTreeMap;
 
+    use k8s_openapi::api::batch::v1::CronJob;
     use std::str::from_utf8;
     use std::sync::Arc;
     use std::time::Duration;
 
+    use crate::cron::generate_cron_name;
     use tokio::time::sleep;
 
     fn get_kubeconfig_options() -> KubeConfigOptions {
@@ -105,20 +90,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_reconciler_default() {
-        let key_1 = String::from("v1.secret.runo.rocks/length-0");
-        let value_1 = String::from("1");
-        let result = reconcile(
-            Arc::from(build_secret_with_annotations(
-                "runo-default-test".to_string(),
-                vec![(key_1, value_1)],
-            )),
-            Arc::new(()),
-        );
-        assert!(result.await.is_ok());
-    }
-
-    #[tokio::test]
     async fn integration_reconcile_should_generate_secret() {
         let secret_name = "runo-generate-test-generate";
         let config = Config::from_kubeconfig(&get_kubeconfig_options())
@@ -127,11 +98,17 @@ mod tests {
         let client = Client::try_from(config).unwrap();
         let ctx = Arc::new(());
 
-        let key_1 = String::from("v1.secret.runo.rocks/generate-0");
-        let value_1 = String::from("username");
+        let key_0 = String::from("v1.secret.runo.rocks/generate-0");
+        let value_0 = String::from("username");
+
+        let key_1 = String::from("v1.secret.runo.rocks/generate-1");
+        let value_1 = String::from("password");
 
         let post_params = build_post_params();
-        let secret = build_secret_with_annotations(secret_name.to_string(), vec![(key_1, value_1)]);
+        let secret = build_secret_with_annotations(
+            secret_name.to_string(),
+            vec![(key_0, value_0), (key_1, value_1)],
+        );
         let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
         secrets.create(&post_params, &secret).await.unwrap();
 
@@ -149,6 +126,15 @@ mod tests {
             .data
             .unwrap()
             .get("username")
+            .is_some());
+        // Value for field password should be generated
+        assert!(secrets
+            .get(secret_name)
+            .await
+            .unwrap()
+            .data
+            .unwrap()
+            .get("password")
             .is_some());
         secrets
             .delete(secret_name, &DeleteParams::default())
@@ -327,13 +313,21 @@ mod tests {
         );
 
         // reconcile again to regenerate secret
-        reconcile(Arc::new(secret), ctx).await.unwrap();
+        reconcile(Arc::new(secret.clone()), ctx).await.unwrap();
         let secret_after_cron = secrets.get(secret_name).await.unwrap().data.unwrap();
         let username_after_cron = from_utf8(&secret_after_cron.get("username").unwrap().0).unwrap();
         assert_ne!(username_before_cron, username_after_cron);
-
+        // Cleanup secrets and generated cronjobs
         secrets
             .delete(secret_name, &DeleteParams::default())
+            .await
+            .unwrap();
+        let cronjobs: Api<CronJob> = Api::namespaced(client.clone(), "default");
+        cronjobs
+            .delete(
+                generate_cron_name(&Arc::new(secret), "0").as_str(),
+                &DeleteParams::default(),
+            )
             .await
             .unwrap();
     }
