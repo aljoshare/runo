@@ -1,6 +1,7 @@
 mod annotations;
 mod cron;
 mod errors;
+mod kube;
 mod logging;
 mod reconciler;
 mod secrets;
