@@ -1,17 +1,19 @@
 use crate::annotations::{
-    get_charset, get_length, get_pattern, needs_regeneration, AnnotationResult,
+    already_generated, get_charset, get_length, get_pattern, id_iter, needs_regeneration,
 };
 use chrono::{DateTime, Utc};
 use k8s_openapi::api::core::v1::Secret;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
 use k8s_openapi::ByteString;
-use kube::api::{Patch, PatchParams};
-use kube::{Api, Client, ResourceExt};
+use kube::api::Patch;
+use kube::{Api, ResourceExt};
 use rand::Rng;
 
 use crate::errors::CantCreateStringFromRegex;
 use std::collections::BTreeMap;
 
+use crate::annotations;
+use crate::kube::{get_client, get_patch_params};
 use std::sync::Arc;
 use std::time::SystemTime;
 use tracing::log::debug;
@@ -71,75 +73,108 @@ fn generate_random_string_from_pattern(
     }
 }
 
-fn update_annotations(obj: &Arc<Secret>, id: &str) -> BTreeMap<String, String> {
+fn update_annotations(obj: &Arc<Secret>) -> BTreeMap<String, String> {
     let mut secret_annotations = match &obj.metadata.annotations {
         Some(annotations) => annotations.clone(),
         None => BTreeMap::new(),
     };
-    let generated_at_v1 = format!("v1.secret.runo.rocks/generated-at-{}", id);
-    let now: DateTime<Utc> = SystemTime::now().into();
-    secret_annotations.insert(generated_at_v1, now.timestamp().to_string());
-    if needs_regeneration(obj, id) {
-        secret_annotations.insert(
-            format!("v1.secret.runo.rocks/regenerate-{}", id),
-            "false".to_string(),
-        );
+    for id in id_iter(obj) {
+        if !already_generated(obj, id.as_str()) {
+            debug!(
+                "{:?} annotations for id {:?} need to be updated because not generated yet",
+                obj.name_any(),
+                id
+            );
+            let generated_at_v1 = format!("v1.secret.runo.rocks/generated-at-{}", id);
+            let now: DateTime<Utc> = SystemTime::now().into();
+            secret_annotations.insert(generated_at_v1, now.timestamp().to_string());
+        }
+        if needs_regeneration(obj, id.as_str()) {
+            secret_annotations.insert(
+                format!("v1.secret.runo.rocks/regenerate-{}", id),
+                "false".to_string(),
+            );
+        }
     }
     secret_annotations
 }
 
-fn update_data(obj: &Arc<Secret>, key: &str, value: &str) -> BTreeMap<String, ByteString> {
+fn update_data(obj: &Arc<Secret>) -> BTreeMap<String, ByteString> {
     let mut secret_data = match &obj.data {
         Some(data) => data.clone(),
         None => BTreeMap::new(),
     };
-    secret_data.insert(key.to_string(), ByteString(value.as_bytes().to_vec()));
+    for id in id_iter(obj) {
+        if !already_generated(obj, id.as_str()) {
+            debug!(
+                "{:?} data for id {:?} needs to be generated because not generated yet",
+                obj.name_any(),
+                id
+            );
+            secret_data = update_data_field(secret_data, obj, &id);
+        }
+        if needs_regeneration(obj, id.as_str()) {
+            debug!(
+                "{:?} for id {:?} needs to be regenerated",
+                obj.name_any(),
+                id
+            );
+            secret_data = update_data_field(secret_data, obj, &id);
+        }
+    }
     secret_data
 }
 
-async fn patch(obj: &Arc<Secret>, id: &str, key: &str, value: &str, client: Client) {
-    let secret_name = obj.name_any();
-    let secret_namespace = obj.namespace().unwrap();
-    let secrets: Api<Secret> = Api::namespaced(client, secret_namespace.as_str());
-    let pp = PatchParams {
-        dry_run: false,
-        force: true,
-        field_manager: Some("runo".to_string()),
-        field_validation: None,
-    };
-    let content = Secret {
+fn update_data_field(
+    mut secret_data: BTreeMap<String, ByteString>,
+    obj: &Arc<Secret>,
+    id: &str,
+) -> BTreeMap<String, ByteString> {
+    let key = annotations::get_key(obj, id);
+    let value = generate_random_string(obj, id);
+    match value {
+        Ok(v) => {
+            secret_data.insert(
+                key.get_value().to_string(),
+                ByteString(v.as_bytes().to_vec()),
+            );
+            secret_data
+        }
+        Err(e) => {
+            error!(
+                "Can't generate random string for {:?}: {:?}",
+                obj.name_any(),
+                e
+            );
+            secret_data
+        }
+    }
+}
+
+fn get_updated_secret(obj: &Arc<Secret>) -> Secret {
+    Secret {
         metadata: ObjectMeta {
-            annotations: Some(update_annotations(obj, id)),
+            annotations: Some(update_annotations(obj)),
             ..ObjectMeta::default()
         },
-        data: Some(update_data(obj, key, value)),
+        data: Some(update_data(obj)),
         ..Secret::default()
-    };
+    }
+}
+
+pub async fn update(obj: &Arc<Secret>) {
+    let client = get_client().await;
+    let secrets: Api<Secret> = Api::namespaced(client, obj.namespace().unwrap().as_str());
     match secrets
-        .patch(&secret_name, &pp, &Patch::Apply(&content))
+        .patch(
+            &obj.name_any(),
+            &get_patch_params(),
+            &Patch::Apply(&get_updated_secret(&obj)),
+        )
         .await
     {
         Ok(_) => info!("Secret patched successfully"),
         Err(e) => error!("Can't patch secret: {:?}", e),
-    }
-}
-
-pub async fn update(
-    obj: &Arc<Secret>,
-    id: &str,
-    key: AnnotationResult<&str>,
-    value: Result<String, CantCreateStringFromRegex>,
-) {
-    match value {
-        Ok(value_string) => match Client::try_default().await {
-            Ok(client) => patch(obj, id, key.get_value(), value_string.as_str(), client).await,
-            Err(e) => panic!("Can't create Kubernetes client. Exiting...\n {:?}", e),
-        },
-        Err(e) => error!(
-            "Can't generate random string for {:?}: {:?}",
-            obj.name_any(),
-            e
-        ),
     }
 }
 
@@ -236,11 +271,13 @@ mod tests {
 
     #[test]
     fn test_update_annotations() {
-        let key_1 = String::from("v1.secret.runo.rocks/pattern-0");
-        let value_1 = String::from("\\S");
-        let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
+        let key_1 = String::from("v1.secret.runo.rocks/generate-0");
+        let value_1 = String::from("username");
+        let key_2 = String::from("v1.secret.runo.rocks/pattern-0");
+        let value_2 = String::from("\\S");
+        let secret = build_secret_with_annotations(vec![(key_1, value_1), (key_2, value_2)]);
         let start: DateTime<Utc> = SystemTime::now().into();
-        let annotations = update_annotations(&Arc::from(secret), "0");
+        let annotations = update_annotations(&Arc::from(secret));
         let end: DateTime<Utc> = SystemTime::now().into();
         assert!(annotations.contains_key("v1.secret.runo.rocks/generated-at-0"));
         let timestamp: i64 = annotations
@@ -256,10 +293,12 @@ mod tests {
 
     #[test]
     fn test_update_annotations_needs_regeneration() {
-        let key_1 = String::from("v1.secret.runo.rocks/regenerate-0");
-        let value_1 = String::from("true");
-        let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
-        let annotations = update_annotations(&Arc::from(secret), "0");
+        let key_1 = String::from("v1.secret.runo.rocks/generate-0");
+        let value_1 = String::from("username");
+        let key_2 = String::from("v1.secret.runo.rocks/regenerate-0");
+        let value_2 = String::from("true");
+        let secret = build_secret_with_annotations(vec![(key_1, value_1), (key_2, value_2)]);
+        let annotations = update_annotations(&Arc::from(secret));
         assert!(annotations.contains_key("v1.secret.runo.rocks/regenerate-0"));
         let needs_regeneration: bool = annotations
             .get("v1.secret.runo.rocks/regenerate-0")
@@ -274,7 +313,7 @@ mod tests {
         let key_1 = String::from("v1.secret.runo.rocks/regenerate-0");
         let value_1 = String::from("false");
         let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
-        let annotations = update_annotations(&Arc::from(secret), "0");
+        let annotations = update_annotations(&Arc::from(secret));
         assert!(annotations.contains_key("v1.secret.runo.rocks/regenerate-0"));
         let needs_regeneration: bool = annotations
             .get("v1.secret.runo.rocks/regenerate-0")
@@ -286,14 +325,11 @@ mod tests {
 
     #[test]
     fn test_update_data() {
-        let key_1 = String::from("v1.secret.runo.rocks/regenerate-0");
-        let value_1 = String::from("false");
+        let key_1 = String::from("v1.secret.runo.rocks/generate-0");
+        let value_1 = String::from("username");
         let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
-        let data = update_data(&Arc::from(secret), "username", "test");
+        let data = update_data(&Arc::from(secret));
         assert!(data.contains_key("username"));
-        assert_eq!(
-            data.get("username").unwrap(),
-            &ByteString("test".as_bytes().to_vec())
-        );
+        assert!(data.get("username").is_some())
     }
 }

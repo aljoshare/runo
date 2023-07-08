@@ -1,12 +1,14 @@
-use crate::annotations::{get_regeneration_cron, AnnotationResult};
+use crate::annotations;
+use crate::annotations::{get_regeneration_cron, id_iter, AnnotationResult};
 use crate::errors::NoNamespaceForSecret;
+use crate::kube::get_client;
 use k8s_openapi::api::batch::v1::{CronJob, CronJobSpec, JobSpec, JobTemplateSpec};
 use k8s_openapi::api::core::v1::{
     Capabilities, Container, PodSpec, PodTemplateSpec, Secret, SecurityContext,
 };
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
 use kube::api::PostParams;
-use kube::{Api, Client, ResourceExt};
+use kube::{Api, ResourceExt};
 use std::sync::Arc;
 use tracing::{debug, error};
 
@@ -105,9 +107,9 @@ fn build_post_params() -> PostParams {
     }
 }
 
-async fn create_or_replace(cj: CronJob, namespace: String) {
-    let client = Client::try_default().await.unwrap();
-    let cronjobs: Api<CronJob> = Api::namespaced(client.clone(), namespace.clone().as_str());
+async fn create_or_replace(cj: CronJob, namespace: &str) {
+    let client = get_client().await;
+    let cronjobs: Api<CronJob> = Api::namespaced(client.clone(), namespace);
     let post_params = build_post_params();
     let c = cronjobs.create(&post_params, &cj).await;
     match c {
@@ -122,14 +124,27 @@ async fn create_or_replace(cj: CronJob, namespace: String) {
     }
 }
 
-pub async fn apply(obj: &Arc<Secret>, id: &str) {
+pub fn generate_cron_name(obj: &Arc<Secret>, id: &str) -> String {
     let mut trunc_obj_name = obj.name_any();
     trunc_obj_name.truncate(10);
+    format!("runo-regeneration-{}-{}", trunc_obj_name, id)
+}
+
+pub async fn update(obj: &Arc<Secret>) {
     match obj.namespace() {
         Some(namespace) => {
-            let cron_name = format!("runo-regeneration-{}-{}", trunc_obj_name, id);
-            let cj = build_cronjob(obj, &cron_name, obj.name_any().as_str(), id);
-            create_or_replace(cj, namespace).await
+            for id in id_iter(obj) {
+                if annotations::has_cron(obj, &id) {
+                    debug!(
+                        "CronJob for {:?} and id {:?} needs to be created",
+                        obj.name_any(),
+                        id
+                    );
+                    let cron_name = generate_cron_name(obj, id.as_str());
+                    let cj = build_cronjob(obj, &cron_name, obj.name_any().as_str(), &id);
+                    create_or_replace(cj, &namespace).await
+                }
+            }
         }
         None => error!("{:?}", NoNamespaceForSecret),
     }

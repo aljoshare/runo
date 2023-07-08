@@ -19,10 +19,10 @@ impl<T> AnnotationResult<T> {
     }
 }
 
-pub fn has_our_annotations(obj: &Arc<Secret>, id: &str) -> bool {
-    let annotations_v1 = vec![format!("v1.secret.runo.rocks/generate-{}", id)];
+pub fn has_our_annotations(obj: &Arc<Secret>) -> bool {
+    let annotations_prefix_v1 = "v1.secret.runo.rocks";
     for name in obj.annotations().keys() {
-        if annotations_v1.contains(name) {
+        if name.contains(annotations_prefix_v1) {
             debug!("Secret {:?} has our annotation", obj.name_any());
             return true;
         }
@@ -164,6 +164,19 @@ pub fn get_key<'a>(obj: &'a Arc<Secret>, id: &str) -> AnnotationResult<&'a str> 
     };
 }
 
+pub fn id_iter(obj: &Arc<Secret>) -> Vec<String> {
+    let generate_keys: Vec<_> = obj
+        .annotations()
+        .keys()
+        .filter(|p| p.contains("v1.secret.runo.rocks/generate-"))
+        .collect();
+    let ids: Vec<_> = generate_keys
+        .into_iter()
+        .map(|p| p.replace("v1.secret.runo.rocks/generate-", ""))
+        .collect();
+    ids
+}
+
 #[cfg(test)]
 mod tests {
     use chrono::{DateTime, Utc};
@@ -196,7 +209,7 @@ mod tests {
         let value_2 = String::from("true");
         let secret = build_secret_with_annotations(vec![(key_1, value_1), (key_2, value_2)]);
         assert_eq!(
-            crate::annotations::has_our_annotations(&Arc::new(secret), "0"),
+            crate::annotations::has_our_annotations(&Arc::new(secret)),
             true
         );
     }
@@ -428,7 +441,7 @@ mod tests {
         let value = String::from("true");
         let secret = build_secret_with_annotations(vec![(key, value)]);
         assert_eq!(
-            crate::annotations::has_our_annotations(&Arc::new(secret.clone()), "0"),
+            crate::annotations::has_our_annotations(&Arc::new(secret.clone())),
             false
         );
         assert_eq!(
