@@ -164,6 +164,19 @@ pub fn get_key<'a>(obj: &'a Arc<Secret>, id: &str) -> AnnotationResult<&'a str> 
     };
 }
 
+pub fn id_iter(obj: &Arc<Secret>) -> Vec<String> {
+    let generate_keys: Vec<_> = obj
+        .annotations()
+        .keys()
+        .filter(|p| p.contains("v1.secret.runo.rocks/generate-"))
+        .collect();
+    let ids: Vec<_> = generate_keys
+        .into_iter()
+        .map(|p| p.replace("v1.secret.runo.rocks/generate-", ""))
+        .collect();
+    ids
+}
+
 #[cfg(test)]
 mod tests {
     use chrono::{DateTime, Utc};
