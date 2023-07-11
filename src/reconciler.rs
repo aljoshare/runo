@@ -332,4 +332,88 @@ mod tests {
             .await
             .unwrap();
     }
+
+    #[tokio::test]
+    async fn integration_reconcile_should_not_generate_secret_when_dry_run() {
+        let secret_name = "runo-generate-test-generate-dry-run";
+        let config = Config::from_kubeconfig(&get_kubeconfig_options())
+            .await
+            .unwrap();
+        let client = Client::try_from(config).unwrap();
+        let k8s = Arc::new((K8s::new(true)));
+
+        let key_0 = String::from("v1.secret.runo.rocks/generate-0");
+        let value_0 = String::from("username");
+
+        let post_params = build_post_params();
+        let secret = build_secret_with_annotations(
+            secret_name.to_string(),
+            vec![(key_0, value_0)],
+        );
+        let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        secrets.create(&post_params, &secret).await.unwrap();
+
+        // Data should be empty
+        assert!(secrets.get(secret_name).await.unwrap().data.is_none());
+
+        // reconcile it
+        reconcile(Arc::new(secret), k8s).await.unwrap();
+
+        // Value for field username should not be generated
+        assert!(secrets
+            .get(secret_name)
+            .await
+            .unwrap()
+            .data
+            .is_none());
+
+        secrets
+            .delete(secret_name, &DeleteParams::default())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn integration_reconcile_should_not_generate_cronjob_when_dry_run() {
+        let secret_name = "runo-generate-test-generate-cronjob-dry-run";
+        let config = Config::from_kubeconfig(&get_kubeconfig_options())
+            .await
+            .unwrap();
+        let client = Client::try_from(config).unwrap();
+        let k8s = Arc::new((K8s::new(true)));
+
+        let key_0 = String::from("v1.secret.runo.rocks/generate-0");
+        let value_0 = String::from("username");
+
+        let key_1 = String::from("v1.secret.runo.rocks/regeneration-cron-0");
+        let value_1 = String::from("* * * * *");
+
+        let post_params = build_post_params();
+        let secret = build_secret_with_annotations(
+            secret_name.to_string(),
+            vec![(key_0, value_0),(key_1, value_1)],
+        );
+        let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        let cronjobs: Api<CronJob> = Api::namespaced(client.clone(),"default");
+        secrets.create(&post_params, &secret).await.unwrap();
+
+        // Data should be empty
+        assert!(secrets.get(secret_name).await.unwrap().data.is_none());
+
+        // reconcile it
+        reconcile(Arc::new(secret.clone()), k8s).await.unwrap();
+
+        assert!(
+        cronjobs
+            .get(
+                build_cron_name(&Arc::new(secret), "0").as_str()
+            )
+            .await
+            .is_err());
+
+        secrets
+            .delete(secret_name, &DeleteParams::default())
+            .await
+            .unwrap();
+    }
 }
