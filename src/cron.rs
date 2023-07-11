@@ -1,13 +1,12 @@
 use crate::annotations;
 use crate::annotations::{get_regeneration_cron, id_iter, AnnotationResult};
 use crate::errors::NoNamespaceForSecret;
-use crate::kube::get_client;
+use crate::k8s::K8s;
 use k8s_openapi::api::batch::v1::{CronJob, CronJobSpec, JobSpec, JobTemplateSpec};
 use k8s_openapi::api::core::v1::{
     Capabilities, Container, PodSpec, PodTemplateSpec, Secret, SecurityContext,
 };
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
-use kube::api::PostParams;
 use kube::{Api, ResourceExt};
 use std::sync::Arc;
 use tracing::{debug, error};
@@ -100,21 +99,14 @@ fn build_security_context() -> Option<SecurityContext> {
     })
 }
 
-fn build_post_params() -> PostParams {
-    PostParams {
-        dry_run: false,
-        field_manager: Some("runo".to_string()),
-    }
-}
-
-async fn create_or_replace(cj: CronJob, namespace: &str) {
-    let client = get_client().await;
-    let cronjobs: Api<CronJob> = Api::namespaced(client.clone(), namespace);
-    let post_params = build_post_params();
-    let c = cronjobs.create(&post_params, &cj).await;
+async fn create_or_replace(cj: CronJob, namespace: &str, k8s: &Arc<K8s>) {
+    let cronjobs: Api<CronJob> = Api::namespaced(K8s::get_client().await, namespace);
+    let c = cronjobs.create(&k8s.get_post_params(), &cj).await;
     match c {
         Err(_e) => {
-            let r = cronjobs.replace(&cj.name_any(), &post_params, &cj).await;
+            let r = cronjobs
+                .replace(&cj.name_any(), &k8s.get_post_params(), &cj)
+                .await;
             match r {
                 Err(e) => error!("{:?}", e),
                 Ok(cj) => debug!("{:?} replaced successfully", cj.metadata.name.unwrap()),
@@ -130,7 +122,7 @@ pub fn generate_cron_name(obj: &Arc<Secret>, id: &str) -> String {
     format!("runo-regeneration-{}-{}", trunc_obj_name, id)
 }
 
-pub async fn update(obj: &Arc<Secret>) {
+pub async fn update(obj: &Arc<Secret>, kube: &Arc<K8s>) {
     match obj.namespace() {
         Some(namespace) => {
             for id in id_iter(obj) {
@@ -140,9 +132,8 @@ pub async fn update(obj: &Arc<Secret>) {
                         obj.name_any(),
                         id
                     );
-                    let cron_name = generate_cron_name(obj, id.as_str());
-                    let cj = build_cronjob(obj, &cron_name, obj.name_any().as_str(), &id);
-                    create_or_replace(cj, &namespace).await
+                    let cj = build_cronjob(obj, obj.name_any().as_str(), &id);
+                    create_or_replace(cj, &namespace, kube).await
                 }
             }
         }

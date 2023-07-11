@@ -13,7 +13,7 @@ use crate::errors::CantCreateStringFromRegex;
 use std::collections::BTreeMap;
 
 use crate::annotations;
-use crate::kube::{get_client, get_patch_params};
+use crate::k8s::K8s;
 use std::sync::Arc;
 use std::time::SystemTime;
 use tracing::log::debug;
@@ -162,14 +162,14 @@ fn get_updated_secret(obj: &Arc<Secret>) -> Secret {
     }
 }
 
-pub async fn update(obj: &Arc<Secret>) {
-    let client = get_client().await;
-    let secrets: Api<Secret> = Api::namespaced(client, obj.namespace().unwrap().as_str());
+pub async fn update(obj: &Arc<Secret>, k8s: &Arc<K8s>) {
+    let secrets: Api<Secret> =
+        Api::namespaced(K8s::get_client().await, obj.namespace().unwrap().as_str());
     match secrets
         .patch(
             &obj.name_any(),
-            &get_patch_params(),
-            &Patch::Apply(&get_updated_secret(&obj)),
+            &k8s.get_patch_params(),
+            &Patch::Apply(&get_updated_secret(obj)),
         )
         .await
     {

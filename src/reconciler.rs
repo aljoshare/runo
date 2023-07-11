@@ -6,7 +6,7 @@ use kube::{Api, ResourceExt};
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::kube::get_client;
+use crate::k8s::K8s;
 use futures::StreamExt;
 use tracing::info;
 
@@ -14,25 +14,25 @@ use tracing::info;
 pub enum Error {}
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
-pub(crate) async fn reconcile(obj: Arc<Secret>, _ctx: Arc<()>) -> Result<Action> {
+pub(crate) async fn reconcile(obj: Arc<Secret>, k8s: Arc<K8s>) -> Result<Action> {
     info!("reconcile request: {}", obj.name_any());
     if annotations::has_our_annotations(&obj) {
-        secrets::update(&obj).await;
-        cron::update(&obj).await
+        secrets::update(&obj, &k8s).await;
+        cron::update(&obj, &k8s).await
     }
     Ok(Action::requeue(Duration::from_secs(3600)))
 }
 
-pub(crate) fn error_policy(_object: Arc<Secret>, _err: &Error, _ctx: Arc<()>) -> Action {
+pub(crate) fn error_policy(_object: Arc<Secret>, _err: &Error, _k8s: Arc<K8s>) -> Action {
     Action::requeue(Duration::from_secs(5))
 }
 
-pub async fn run() {
-    let client = get_client().await;
+pub async fn run(k8s: K8s) {
+    let client = K8s::get_client().await;
     let secrets = Api::<Secret>::all(client);
     Controller::new(secrets.clone(), Default::default())
         .shutdown_on_signal()
-        .run(reconcile, error_policy, Arc::new(()))
+        .run(reconcile, error_policy, Arc::new(k8s))
         .filter_map(|x| async move { std::result::Result::ok(x) })
         .for_each(|_| futures::future::ready(()))
         .await;
@@ -56,8 +56,9 @@ mod tests {
     use std::sync::Arc;
     use std::time::Duration;
 
-    use crate::cron::generate_cron_name;
+    use crate::cron::build_cron_name;
     use tokio::time::sleep;
+    use crate::k8s::K8s;
 
     fn get_kubeconfig_options() -> KubeConfigOptions {
         KubeConfigOptions {
@@ -96,7 +97,7 @@ mod tests {
             .await
             .unwrap();
         let client = Client::try_from(config).unwrap();
-        let ctx = Arc::new(());
+        let k8s = Arc::new((K8s::new(false)));
 
         let key_0 = String::from("v1.secret.runo.rocks/generate-0");
         let value_0 = String::from("username");
@@ -116,7 +117,7 @@ mod tests {
         assert!(secrets.get(secret_name).await.unwrap().data.is_none());
 
         // reconcile it
-        reconcile(Arc::new(secret), ctx).await.unwrap();
+        reconcile(Arc::new(secret), k8s).await.unwrap();
 
         // Value for field username should be generated
         assert!(secrets
@@ -149,7 +150,7 @@ mod tests {
             .await
             .unwrap();
         let client = Client::try_from(config).unwrap();
-        let ctx = Arc::new(());
+        let k8s = Arc::new((K8s::new(false)));
 
         let key_1 = String::from("v1.secret.runo.rocks/generate-0");
         let value_1 = String::from("username");
@@ -169,7 +170,7 @@ mod tests {
         assert!(secrets.get(secret_name).await.unwrap().data.is_none());
 
         // reconcile it
-        reconcile(Arc::new(secret), ctx).await.unwrap();
+        reconcile(Arc::new(secret), k8s).await.unwrap();
 
         // Value for field username should be generated and has length of 10
         let secret = secrets.get(secret_name).await.unwrap().data.unwrap();
@@ -188,7 +189,7 @@ mod tests {
             .await
             .unwrap();
         let client = Client::try_from(config).unwrap();
-        let ctx = Arc::new(());
+        let k8s = Arc::new((K8s::new(false)));
 
         let key_1 = String::from("v1.secret.runo.rocks/generate-0");
         let value_1 = String::from("username");
@@ -208,7 +209,7 @@ mod tests {
         assert!(secrets.get(secret_name).await.unwrap().data.is_none());
 
         // reconcile it
-        reconcile(Arc::new(secret), ctx).await.unwrap();
+        reconcile(Arc::new(secret), k8s).await.unwrap();
 
         // Value for field username should be generated and match the charset
         let secret = secrets.get(secret_name).await.unwrap().data.unwrap();
@@ -229,7 +230,7 @@ mod tests {
             .await
             .unwrap();
         let client = Client::try_from(config).unwrap();
-        let ctx = Arc::new(());
+        let k8s = Arc::new((K8s::new(false)));
 
         let key_1 = String::from("v1.secret.runo.rocks/generate-0");
         let value_1 = String::from("username");
@@ -249,7 +250,7 @@ mod tests {
         assert!(secrets.get(secret_name).await.unwrap().data.is_none());
 
         // reconcile it
-        reconcile(Arc::new(secret), ctx).await.unwrap();
+        reconcile(Arc::new(secret), k8s).await.unwrap();
 
         // Value for field username should be generated and match the pattern
         let secret = secrets.get(secret_name).await.unwrap().data.unwrap();
@@ -270,7 +271,7 @@ mod tests {
             .await
             .unwrap();
         let client = Client::try_from(config).unwrap();
-        let ctx = Arc::new(());
+        let k8s = Arc::new((K8s::new(false)));
 
         let key_1 = String::from("v1.secret.runo.rocks/generate-0");
         let value_1 = String::from("username");
@@ -289,7 +290,7 @@ mod tests {
         assert!(secrets.get(secret_name).await.unwrap().data.is_none());
 
         // reconcile it
-        reconcile(Arc::new(secret.clone()), ctx.clone())
+        reconcile(Arc::new(secret.clone()), k8s.clone())
             .await
             .unwrap();
         let secret_before_cron = secrets.get(secret_name).await.unwrap().data.unwrap();
@@ -313,7 +314,7 @@ mod tests {
         );
 
         // reconcile again to regenerate secret
-        reconcile(Arc::new(secret.clone()), ctx).await.unwrap();
+        reconcile(Arc::new(secret.clone()), k8s).await.unwrap();
         let secret_after_cron = secrets.get(secret_name).await.unwrap().data.unwrap();
         let username_after_cron = from_utf8(&secret_after_cron.get("username").unwrap().0).unwrap();
         assert_ne!(username_before_cron, username_after_cron);
