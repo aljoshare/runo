@@ -11,7 +11,7 @@ use kube::{Api, ResourceExt};
 use std::sync::Arc;
 use tracing::{debug, error};
 
-fn build_cronjob(obj: &Arc<Secret>, cron_name: &str, secret_name: &str, id: &str) -> CronJob {
+fn build_cronjob(obj: &Arc<Secret>, secret_name: &str, id: &str) -> CronJob {
     let cron_spec = get_regeneration_cron(obj, id);
     debug!(
         "Will create cron job with pattern {:?} for {:?} and id {}",
@@ -21,7 +21,7 @@ fn build_cronjob(obj: &Arc<Secret>, cron_name: &str, secret_name: &str, id: &str
     );
 
     CronJob {
-        metadata: build_cronjob_object_meta(cron_name),
+        metadata: build_cronjob_object_meta(&build_cron_name(obj, id)),
         spec: build_cronjob_spec(cron_spec, secret_name, id),
         ..CronJob::default()
     }
@@ -116,9 +116,9 @@ async fn create_or_replace(cj: CronJob, namespace: &str, k8s: &Arc<K8s>) {
     }
 }
 
-pub fn generate_cron_name(obj: &Arc<Secret>, id: &str) -> String {
+pub fn build_cron_name(obj: &Arc<Secret>, id: &str) -> String {
     let mut trunc_obj_name = obj.name_any();
-    trunc_obj_name.truncate(10);
+    trunc_obj_name.truncate(20);
     format!("runo-regeneration-{}-{}", trunc_obj_name, id)
 }
 
@@ -143,7 +143,7 @@ pub async fn update(obj: &Arc<Secret>, kube: &Arc<K8s>) {
 
 #[cfg(test)]
 mod tests {
-    use crate::cron::build_cronjob;
+    use crate::cron::{build_cron_name, build_cronjob};
     use k8s_openapi::api::core::v1::Secret;
     use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
     use kube::ResourceExt;
@@ -161,7 +161,7 @@ mod tests {
     #[cfg(test)]
     fn test_build_cronjob() {
         let secret = Arc::from(build_secret());
-        let cronjob = build_cronjob(&secret, "test-cronjob", "test-secret", "0");
-        assert_eq!("test-cronjob", cronjob.name_any())
+        let cronjob = build_cronjob(&secret, "test-secret", "0");
+        assert_eq!(build_cron_name(&*Arc::new(secret), "0"), cronjob.name_any())
     }
 }
