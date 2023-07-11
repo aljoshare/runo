@@ -326,7 +326,7 @@ mod tests {
         let cronjobs: Api<CronJob> = Api::namespaced(client.clone(), "default");
         cronjobs
             .delete(
-                generate_cron_name(&Arc::new(secret), "0").as_str(),
+                build_cron_name(&Arc::new(secret), "0").as_str(),
                 &DeleteParams::default(),
             )
             .await
