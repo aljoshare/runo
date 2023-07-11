@@ -57,8 +57,8 @@ mod tests {
     use std::time::Duration;
 
     use crate::cron::build_cron_name;
-    use tokio::time::sleep;
     use crate::k8s::K8s;
+    use tokio::time::sleep;
 
     fn get_kubeconfig_options() -> KubeConfigOptions {
         KubeConfigOptions {
@@ -346,10 +346,7 @@ mod tests {
         let value_0 = String::from("username");
 
         let post_params = build_post_params();
-        let secret = build_secret_with_annotations(
-            secret_name.to_string(),
-            vec![(key_0, value_0)],
-        );
+        let secret = build_secret_with_annotations(secret_name.to_string(), vec![(key_0, value_0)]);
         let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
         secrets.create(&post_params, &secret).await.unwrap();
 
@@ -360,12 +357,7 @@ mod tests {
         reconcile(Arc::new(secret), k8s).await.unwrap();
 
         // Value for field username should not be generated
-        assert!(secrets
-            .get(secret_name)
-            .await
-            .unwrap()
-            .data
-            .is_none());
+        assert!(secrets.get(secret_name).await.unwrap().data.is_none());
 
         secrets
             .delete(secret_name, &DeleteParams::default())
@@ -391,10 +383,10 @@ mod tests {
         let post_params = build_post_params();
         let secret = build_secret_with_annotations(
             secret_name.to_string(),
-            vec![(key_0, value_0),(key_1, value_1)],
+            vec![(key_0, value_0), (key_1, value_1)],
         );
         let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
-        let cronjobs: Api<CronJob> = Api::namespaced(client.clone(),"default");
+        let cronjobs: Api<CronJob> = Api::namespaced(client.clone(), "default");
         secrets.create(&post_params, &secret).await.unwrap();
 
         // Data should be empty
@@ -403,11 +395,8 @@ mod tests {
         // reconcile it
         reconcile(Arc::new(secret.clone()), k8s).await.unwrap();
 
-        assert!(
-        cronjobs
-            .get(
-                build_cron_name(&Arc::new(secret), "0").as_str()
-            )
+        assert!(cronjobs
+            .get(build_cron_name(&Arc::new(secret), "0").as_str())
             .await
             .is_err());
 
