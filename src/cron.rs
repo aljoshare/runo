@@ -1,5 +1,5 @@
 use crate::annotations;
-use crate::annotations::{get_regeneration_cron, id_iter, AnnotationResult};
+use crate::annotations::{id_iter, regeneration_cron, AnnotationResult};
 use crate::errors::NoNamespaceForSecret;
 use crate::k8s::K8s;
 use k8s_openapi::api::batch::v1::{CronJob, CronJobSpec, JobSpec, JobTemplateSpec};
@@ -12,7 +12,7 @@ use std::sync::Arc;
 use tracing::{debug, error};
 
 fn build_cronjob(obj: &Arc<Secret>, secret_name: &str, id: &str) -> CronJob {
-    let cron_spec = get_regeneration_cron(obj, id);
+    let cron_spec = regeneration_cron(obj, id);
     debug!(
         "Will create cron job with pattern {:?} for {:?} and id {}",
         cron_spec.get_value(),
