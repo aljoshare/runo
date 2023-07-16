@@ -1,5 +1,5 @@
 use crate::annotations::{
-    already_generated, get_charset, get_length, get_pattern, id_iter, needs_regeneration,
+    already_generated, charset, id_iter, length, needs_regeneration, pattern,
 };
 use chrono::{DateTime, Utc};
 use k8s_openapi::api::core::v1::Secret;
@@ -23,9 +23,9 @@ pub fn generate_random_string(
     obj: &Arc<Secret>,
     id: &str,
 ) -> Result<String, CantCreateStringFromRegex> {
-    let length = get_length(obj, id);
-    let charset = get_charset(obj, id);
-    let pattern = get_pattern(obj, id);
+    let length = length(obj, id);
+    let charset = charset(obj, id);
+    let pattern = pattern(obj, id);
     let random_string = if !charset.is_default() {
         Ok(generate_random_string_from_charset(
             length.get_value(),
@@ -130,7 +130,7 @@ fn update_data_field(
     obj: &Arc<Secret>,
     id: &str,
 ) -> BTreeMap<String, ByteString> {
-    let key = annotations::get_key(obj, id);
+    let key = annotations::key(obj, id);
     let value = generate_random_string(obj, id);
     match value {
         Ok(v) => {
