@@ -4,7 +4,7 @@ use std::net::TcpListener;
 fn _get_available_port() -> String {
     format!(
         "{:?}",
-        (9000..10000)
+        (9900..10000)
             .find(|port| _port_is_available(*port))
             .unwrap()
     )
