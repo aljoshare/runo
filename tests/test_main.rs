@@ -1,22 +1,6 @@
 use assert_cmd::Command;
 use std::net::TcpListener;
 
-fn _get_available_port() -> String {
-    format!(
-        "{:?}",
-        (9900..10000)
-            .find(|port| _port_is_available(*port))
-            .unwrap()
-    )
-}
-
-fn _port_is_available(port: u16) -> bool {
-    match TcpListener::bind(("127.0.0.1", port)) {
-        Ok(_) => true,
-        Err(_) => false,
-    }
-}
-
 #[test]
 fn runs() {
     let mut cmd = Command::cargo_bin("runo").unwrap();
@@ -41,7 +25,7 @@ fn version() {
 fn http_port() {
     let mut cmd = Command::cargo_bin("runo").unwrap();
     cmd.arg("--http-port")
-        .arg(_get_available_port())
+        .arg("0")
         .timeout(std::time::Duration::from_secs(1))
         .assert()
         .interrupted();
@@ -52,7 +36,7 @@ fn dry_run() {
     let mut cmd = Command::cargo_bin("runo").unwrap();
     cmd.arg("--dry-run")
         .arg("--http-port")
-        .arg(_get_available_port())
+        .arg("0")
         .timeout(std::time::Duration::from_secs(1))
         .assert()
         .interrupted();
