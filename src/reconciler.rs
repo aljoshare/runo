@@ -8,6 +8,7 @@ use std::time::Duration;
 
 use crate::k8s::K8s;
 use futures::StreamExt;
+use kube::api::ListParams;
 use tracing::info;
 
 #[derive(thiserror::Error, Debug)]
@@ -27,7 +28,7 @@ pub(crate) fn error_policy(_object: Arc<Secret>, _err: &Error, _k8s: Arc<K8s>) -
     Action::requeue(Duration::from_secs(5))
 }
 
-pub async fn run(k8s: K8s) {
+pub async fn run_with_reconciliation(k8s: K8s) {
     let client = K8s::get_client().await;
     let secrets = Api::<Secret>::all(client);
     Controller::new(secrets.clone(), Default::default())
@@ -36,6 +37,14 @@ pub async fn run(k8s: K8s) {
         .filter_map(|x| async move { std::result::Result::ok(x) })
         .for_each(|_| futures::future::ready(()))
         .await;
+}
+
+pub async fn run_one_shot(k8s: K8s) {
+    let client = K8s::get_client().await;
+    let secrets = Api::<Secret>::all(client);
+    for secret in secrets.list(&ListParams::default()).await.unwrap() {
+        let _ = reconcile(Arc::new(secret), Arc::new(k8s)).await;
+    }
 }
 
 #[cfg(test)]
