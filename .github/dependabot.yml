@@ -12,3 +12,8 @@ updates:
     commit-message:
       prefix: "fix(deps)"
       include: "scope"
+    groups:
+      kube-rs-k8s-openapi:
+        patterns:
+          - "kube"
+          - "k8s-openapi"
