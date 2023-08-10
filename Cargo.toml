@@ -33,3 +33,7 @@ clap = { version = "4.3.19", features = ["derive"] }
 [dev-dependencies]
 assert_cmd = "2.0.12"
 criterion = { version = "0.5.1", features = ["html_reports"] }
+
+[[bench]]
+name = "main"
+harness = false
