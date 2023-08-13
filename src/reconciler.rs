@@ -1,4 +1,4 @@
-use crate::{annotations, cron, secrets};
+use crate::{cron, labels, secrets};
 use k8s_openapi::api::core::v1::Secret;
 use kube::runtime::controller::Action;
 use kube::runtime::Controller;
@@ -17,7 +17,7 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 pub(crate) async fn reconcile(obj: Arc<Secret>, k8s: Arc<K8s>) -> Result<Action> {
     info!("reconcile request: {}", obj.name_any());
-    if annotations::has_our_annotations(&obj) {
+    if labels::managed_by_us(&obj) {
         secrets::update(&obj, &k8s).await;
         cron::update(&obj, &k8s).await
     }
