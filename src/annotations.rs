@@ -19,17 +19,6 @@ impl<T> AnnotationResult<T> {
     }
 }
 
-pub fn has_our_annotations(obj: &Arc<Secret>) -> bool {
-    let annotations_prefix_v1 = "v1.secret.runo.rocks";
-    for name in obj.annotations().keys() {
-        if name.contains(annotations_prefix_v1) {
-            debug!("Secret {:?} has our annotation", obj.name_any());
-            return true;
-        }
-    }
-    false
-}
-
 pub fn already_generated(obj: &Arc<Secret>, id: &str) -> bool {
     let generated_at_v1 = format!("v1.secret.runo.rocks/generated-at-{}", id);
     println!("{:?}", obj.annotations().keys());
