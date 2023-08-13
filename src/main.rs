@@ -3,6 +3,7 @@ mod cron;
 mod errors;
 mod http;
 mod k8s;
+mod labels;
 mod logging;
 mod reconciler;
 mod secrets;
