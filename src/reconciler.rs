@@ -84,7 +84,34 @@ mod tests {
         }
     }
 
-    fn build_secret_with_annotations(name: String, annotations: Vec<(String, String)>) -> Secret {
+    fn build_managed_secret_with_annotations(
+        name: String,
+        annotations: Vec<(String, String)>,
+    ) -> Secret {
+        let mut label_map = BTreeMap::new();
+        label_map.insert(
+            "v1.secret.runo.rocks/managed".to_string(),
+            "true".to_string(),
+        );
+        let annotation_map = annotations
+            .into_iter()
+            .collect::<BTreeMap<String, String>>();
+        Secret {
+            metadata: ObjectMeta {
+                labels: Some(label_map),
+                annotations: Some(annotation_map),
+                name: Some(name),
+                namespace: Some("default".to_string()),
+                ..ObjectMeta::default()
+            },
+            ..Secret::default()
+        }
+    }
+
+    fn build_unmanaged_secret_with_annotations(
+        name: String,
+        annotations: Vec<(String, String)>,
+    ) -> Secret {
         let annotation_map = annotations
             .into_iter()
             .collect::<BTreeMap<String, String>>();
@@ -115,7 +142,7 @@ mod tests {
         let value_1 = String::from("password");
 
         let post_params = build_post_params();
-        let secret = build_secret_with_annotations(
+        let secret = build_managed_secret_with_annotations(
             secret_name.to_string(),
             vec![(key_0, value_0), (key_1, value_1)],
         );
@@ -153,6 +180,43 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn integration_reconcile_should_not_generate_secret_when_unmanaged() {
+        let secret_name = "runo-generate-test-unmanaged";
+        let config = Config::from_kubeconfig(&get_kubeconfig_options())
+            .await
+            .unwrap();
+        let client = Client::try_from(config).unwrap();
+        let k8s = Arc::new((K8s::new(false)));
+
+        let key_0 = String::from("v1.secret.runo.rocks/generate-0");
+        let value_0 = String::from("username");
+
+        let key_1 = String::from("v1.secret.runo.rocks/generate-1");
+        let value_1 = String::from("password");
+
+        let post_params = build_post_params();
+        let secret = build_unmanaged_secret_with_annotations(
+            secret_name.to_string(),
+            vec![(key_0, value_0), (key_1, value_1)],
+        );
+        let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        secrets.create(&post_params, &secret).await.unwrap();
+
+        // Data should be empty
+        assert!(secrets.get(secret_name).await.unwrap().data.is_none());
+
+        // reconcile it
+        reconcile(Arc::new(secret), k8s).await.unwrap();
+
+        // Data should still be empty
+        assert!(secrets.get(secret_name).await.unwrap().data.is_none());
+        secrets
+            .delete(secret_name, &DeleteParams::default())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
     async fn integration_reconcile_should_generate_secret_with_length() {
         let secret_name = "runo-generate-test-length";
         let config = Config::from_kubeconfig(&get_kubeconfig_options())
@@ -168,7 +232,7 @@ mod tests {
         let value_2 = String::from("10");
 
         let post_params = build_post_params();
-        let secret = build_secret_with_annotations(
+        let secret = build_managed_secret_with_annotations(
             secret_name.to_string(),
             vec![(key_1, value_1), (key_2, value_2)],
         );
@@ -207,7 +271,7 @@ mod tests {
         let value_2 = String::from("abcd");
 
         let post_params = build_post_params();
-        let secret = build_secret_with_annotations(
+        let secret = build_managed_secret_with_annotations(
             secret_name.to_string(),
             vec![(key_1, value_1), (key_2, value_2)],
         );
@@ -248,7 +312,7 @@ mod tests {
         let value_2 = String::from("\\S");
 
         let post_params = build_post_params();
-        let secret = build_secret_with_annotations(
+        let secret = build_managed_secret_with_annotations(
             secret_name.to_string(),
             vec![(key_1, value_1), (key_2, value_2)],
         );
@@ -289,7 +353,7 @@ mod tests {
         let value_2 = String::from("* * * * *");
 
         let post_params = build_post_params();
-        let secret = build_secret_with_annotations(
+        let secret = build_managed_secret_with_annotations(
             secret_name.to_string(),
             vec![(key_1, value_1), (key_2, value_2)],
         );
@@ -355,7 +419,8 @@ mod tests {
         let value_0 = String::from("username");
 
         let post_params = build_post_params();
-        let secret = build_secret_with_annotations(secret_name.to_string(), vec![(key_0, value_0)]);
+        let secret =
+            build_managed_secret_with_annotations(secret_name.to_string(), vec![(key_0, value_0)]);
         let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
         secrets.create(&post_params, &secret).await.unwrap();
 
@@ -390,7 +455,7 @@ mod tests {
         let value_1 = String::from("* * * * *");
 
         let post_params = build_post_params();
-        let secret = build_secret_with_annotations(
+        let secret = build_managed_secret_with_annotations(
             secret_name.to_string(),
             vec![(key_0, value_0), (key_1, value_1)],
         );
