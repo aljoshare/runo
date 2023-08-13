@@ -162,7 +162,6 @@ mod tests {
         }
     }
 
-
     #[test]
     fn v1_already_generated_is_true() {
         let key_1 = String::from("v1.secret.runo.rocks/generated-at-0");

@@ -22,7 +22,7 @@ kind: Secret
 metadata:
   name: example-secret
   labels:
-    v1.secret.runo.rocks/managed=true
+    v1.secret.runo.rocks/managed: "true"
 ```
 
 ## Annotations
@@ -35,9 +35,9 @@ kind: Secret
 metadata:
   name: example-secret
   labels:
-    v1.secret.runo.rocks/managed=true
+    v1.secret.runo.rocks/managed: "true"
   annotations:
-    v1.secret.runo.rocks/generate-${ID}=${FIELD_NAME} # Example: password
+    v1.secret.runo.rocks/generate-${ID}: ${FIELD_NAME} # Example: password
   type: Opaque
   data:
 ```
@@ -51,10 +51,10 @@ kind: Secret
 metadata:
   name: example-secret
   labels:
-    v1.secret.runo.rocks/managed=true
+    v1.secret.runo.rocks/managed: "true"
   annotations:
-    v1.secret.runo.rocks/generate-${ID}=${FIELD_NAME} # Example: password
-    v1.secret.runo.rocks/length-${ID}=${LENGTH_OF_THE_VALUE} # Example: 10
+    v1.secret.runo.rocks/generate-${ID}: ${FIELD_NAME} # Example: password
+    v1.secret.runo.rocks/length-${ID}: ${LENGTH_OF_THE_VALUE} # Example: 10
   type: Opaque
   data:
 ```
@@ -68,11 +68,11 @@ kind: Secret
 metadata:
   name: example-secret
   labels:
-    v1.secret.runo.rocks/managed=true
+    v1.secret.runo.rocks/managed: "true"
   annotations:
-    v1.secret.runo.rocks/generate-${ID}=${FIELD_NAME} # Example: replica_set_key
-    v1.secret.runo.rocks/length-${ID}=${LENGTH_OF_THE_VALUE} # Example: 5
-    v1.secret.runo.rocks/charset-${ID}=${CHARSET} # Example: abcd
+    v1.secret.runo.rocks/generate-${ID}: ${FIELD_NAME} # Example: replica_set_key
+    v1.secret.runo.rocks/length-${ID}: ${LENGTH_OF_THE_VALUE} # Example: 5
+    v1.secret.runo.rocks/charset-${ID}: ${CHARSET} # Example: abcd
   type: Opaque
   data:
 ```
@@ -86,11 +86,11 @@ kind: Secret
 metadata:
   name: example-secret
   labels:
-    v1.secret.runo.rocks/managed=true
+    v1.secret.runo.rocks/managed: "true"
   annotations:
-    v1.secret.runo.rocks/generate-${ID}=${FIELD_NAME} # Example: password
-    v1.secret.runo.rocks/length-${ID}=${LENGTH_OF_THE_VALUE} # Example: 5
-    v1.secret.runo.rocks/pattern-${ID}=${CHARSET} # Example: abcd
+    v1.secret.runo.rocks/generate-${ID}: ${FIELD_NAME} # Example: password
+    v1.secret.runo.rocks/length-${ID}: ${LENGTH_OF_THE_VALUE} # Example: 5
+    v1.secret.runo.rocks/pattern-${ID}: ${CHARSET} # Example: abcd
   type: Opaque
   data:
 ```
@@ -104,12 +104,12 @@ kind: Secret
 metadata:
   name: example-secret
   labels:
-    v1.secret.runo.rocks/managed=true
+    v1.secret.runo.rocks/managed: "true"
   annotations:
-    v1.secret.runo.rocks/generate-${ID}=${FIELD_NAME} # Example: password
-    v1.secret.runo.rocks/length-${ID}=${LENGTH_OF_THE_VALUE} # Example: 5
-    v1.secret.runo.rocks/pattern-${ID}=${CHARSET} # Example: abcd
-    v1.secret.runo.rocks/regeneration-cron-${ID}=${CRON_SPEC}
+    v1.secret.runo.rocks/generate-${ID}: ${FIELD_NAME} # Example: password
+    v1.secret.runo.rocks/length-${ID}: ${LENGTH_OF_THE_VALUE} # Example: 5
+    v1.secret.runo.rocks/pattern-${ID}: ${CHARSET} # Example: abcd
+    v1.secret.runo.rocks/regeneration-cron-${ID}: ${CRON_SPEC}
   type: Opaque
   data:
 ```
