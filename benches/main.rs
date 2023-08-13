@@ -23,12 +23,21 @@ fn build_post_params() -> PostParams {
     }
 }
 
-fn build_secret_with_annotations(name: String, annotations: Vec<(String, String)>) -> Secret {
+fn build_managed_secret_with_annotations(
+    name: String,
+    annotations: Vec<(String, String)>,
+) -> Secret {
+    let mut label_map = BTreeMap::new();
+    label_map.insert(
+        "v1.secret.runo.rocks/managed".to_string(),
+        "true".to_string(),
+    );
     let annotation_map = annotations
         .into_iter()
         .collect::<BTreeMap<String, String>>();
     Secret {
         metadata: ObjectMeta {
+            labels: Some(label_map),
             annotations: Some(annotation_map),
             name: Some(name),
             namespace: Some("default".to_string()),
@@ -51,7 +60,7 @@ async fn create_secret(secret_name: String) {
     let value_2 = String::from("10");
 
     let post_params = build_post_params();
-    let secret = build_secret_with_annotations(
+    let secret = build_managed_secret_with_annotations(
         secret_name.clone(),
         vec![(key_1, value_1), (key_2, value_2)],
     );
@@ -73,7 +82,7 @@ async fn clear_secret(secret_name: String) {
     let value_2 = String::from("10");
 
     let post_params = build_post_params();
-    let secret = build_secret_with_annotations(
+    let secret = build_managed_secret_with_annotations(
         secret_name.clone(),
         vec![(key_1, value_1), (key_2, value_2)],
     );
