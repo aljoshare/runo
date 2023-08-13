@@ -14,6 +14,16 @@ It supports:
 > rūnō is a personal project! It's important for me to mention that I'm the only maintainer at the moment and because 
 > humans make mistakes (a lot of mistakes), please be careful when using it for production environments.
 
+## Labels
+In order to denote that runo should take care of this secret, you need to add the following label to each managed secret:
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: example-secret
+  labels:
+    v1.secret.runo.rocks/managed=true
+```
 
 ## Annotations
 
@@ -24,6 +34,8 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: example-secret
+  labels:
+    v1.secret.runo.rocks/managed=true
   annotations:
     v1.secret.runo.rocks/generate-${ID}=${FIELD_NAME} # Example: password
   type: Opaque
@@ -38,6 +50,8 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: example-secret
+  labels:
+    v1.secret.runo.rocks/managed=true
   annotations:
     v1.secret.runo.rocks/generate-${ID}=${FIELD_NAME} # Example: password
     v1.secret.runo.rocks/length-${ID}=${LENGTH_OF_THE_VALUE} # Example: 10
@@ -53,6 +67,8 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: example-secret
+  labels:
+    v1.secret.runo.rocks/managed=true
   annotations:
     v1.secret.runo.rocks/generate-${ID}=${FIELD_NAME} # Example: replica_set_key
     v1.secret.runo.rocks/length-${ID}=${LENGTH_OF_THE_VALUE} # Example: 5
@@ -69,6 +85,8 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: example-secret
+  labels:
+    v1.secret.runo.rocks/managed=true
   annotations:
     v1.secret.runo.rocks/generate-${ID}=${FIELD_NAME} # Example: password
     v1.secret.runo.rocks/length-${ID}=${LENGTH_OF_THE_VALUE} # Example: 5
@@ -85,6 +103,8 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: example-secret
+  labels:
+    v1.secret.runo.rocks/managed=true
   annotations:
     v1.secret.runo.rocks/generate-${ID}=${FIELD_NAME} # Example: password
     v1.secret.runo.rocks/length-${ID}=${LENGTH_OF_THE_VALUE} # Example: 5
