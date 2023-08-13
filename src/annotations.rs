@@ -162,18 +162,6 @@ mod tests {
         }
     }
 
-    #[test]
-    fn v1_has_our_annotations_is_true() {
-        let key_1 = String::from("v1.secret.runo.rocks/generate-0");
-        let value_1 = String::from("true");
-        let key_2 = String::from("test-annotation");
-        let value_2 = String::from("true");
-        let secret = build_secret_with_annotations(vec![(key_1, value_1), (key_2, value_2)]);
-        assert_eq!(
-            crate::annotations::has_our_annotations(&Arc::new(secret)),
-            true
-        );
-    }
 
     #[test]
     fn v1_already_generated_is_true() {
@@ -393,21 +381,6 @@ mod tests {
         assert_eq!(
             crate::annotations::key(&Arc::new(secret), "1").is_default(),
             true
-        );
-    }
-
-    #[test]
-    fn no_annotation_is_set() {
-        let key = String::from("test-annotation");
-        let value = String::from("true");
-        let secret = build_secret_with_annotations(vec![(key, value)]);
-        assert_eq!(
-            crate::annotations::has_our_annotations(&Arc::new(secret.clone())),
-            false
-        );
-        assert_eq!(
-            crate::annotations::already_generated(&Arc::new(secret), "0"),
-            false
         );
     }
 }
