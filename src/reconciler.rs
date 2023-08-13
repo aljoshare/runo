@@ -1,6 +1,7 @@
 use crate::{cron, labels, secrets};
 use k8s_openapi::api::core::v1::Secret;
 use kube::runtime::controller::Action;
+use kube::runtime::watcher::Config;
 use kube::runtime::Controller;
 use kube::{Api, ResourceExt};
 use std::sync::Arc;
@@ -31,7 +32,11 @@ pub(crate) fn error_policy(_object: Arc<Secret>, _err: &Error, _k8s: Arc<K8s>) -
 pub async fn run_with_reconciliation(k8s: K8s) {
     let client = K8s::get_client().await;
     let secrets = Api::<Secret>::all(client);
-    Controller::new(secrets.clone(), Default::default())
+    let watcher_config = Config {
+        label_selector: Some(labels::get_managed_label()),
+        ..Default::default()
+    };
+    Controller::new(secrets.clone(), watcher_config)
         .shutdown_on_signal()
         .run(reconcile, error_policy, Arc::new(k8s))
         .filter_map(|x| async move { std::result::Result::ok(x) })
