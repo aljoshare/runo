@@ -28,7 +28,7 @@ tracing-subscriber = { version = "0.3.17", features = ["json", "env-filter"] }
 sha3 = "0.10.8"
 actix-web = "4.3.1"
 anyhow = "1.0.74"
-clap = { version = "4.3.19", features = ["derive"] }
+clap = { version = "4.3.21", features = ["derive"] }
 
 [dev-dependencies]
 assert_cmd = "2.0.12"
