@@ -1872,12 +1872,12 @@ dependencies = [
 
 [[package]]
 name = "rand_regex"
-version = "0.15.1"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b2a9fe2d7d9eeaf3279d1780452a5bbd26b31b27938787ef1c3e930d1e9cfbd"
+checksum = "8276e2c4e37f1907c587794d9b8b3334e1d44f36e05f8c13d61c50c19c264ae2"
 dependencies = [
  "rand",
- "regex-syntax 0.6.29",
+ "regex-syntax 0.7.4",
 ]
 
 [[package]]
