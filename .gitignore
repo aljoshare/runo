@@ -1,3 +1,4 @@
 /target
 /.idea/
 /build_rs_cov.profraw
+/.vscode/
