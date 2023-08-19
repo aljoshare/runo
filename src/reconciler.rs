@@ -343,8 +343,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn integration_reconcile_should_generate_secret_with_regeneration() {
-        let secret_name = "runo-generate-test-regeneration";
+    async fn integration_reconcile_should_generate_secret_with_renewal() {
+        let secret_name = "runo-generate-test-renewal";
         let config = Config::from_kubeconfig(&get_kubeconfig_options())
             .await
             .unwrap();
@@ -354,7 +354,7 @@ mod tests {
         let key_1 = String::from("v1.secret.runo.rocks/generate-0");
         let value_1 = String::from("username");
 
-        let key_2 = String::from("v1.secret.runo.rocks/regeneration-cron-0");
+        let key_2 = String::from("v1.secret.runo.rocks/renewal-cron-0");
         let value_2 = String::from("* * * * *");
 
         let post_params = build_post_params();
@@ -376,8 +376,8 @@ mod tests {
             from_utf8(&secret_before_cron.get("username").unwrap().0).unwrap();
         sleep(Duration::from_secs(60)).await;
 
-        // check if regeneration annotation is set
-        let secret_with_regeneration_annotation = secrets
+        // check if renewal annotation is set
+        let secret_with_renewal_annotation = secrets
             .get(secret_name)
             .await
             .unwrap()
@@ -385,13 +385,13 @@ mod tests {
             .annotations
             .unwrap();
         assert_eq!(
-            secret_with_regeneration_annotation
-                .get("v1.secret.runo.rocks/regenerate-0")
+            secret_with_renewal_annotation
+                .get("v1.secret.runo.rocks/renewal-0")
                 .unwrap(),
             "true"
         );
 
-        // reconcile again to regenerate secret
+        // reconcile again to renewal secret
         reconcile(Arc::new(secret.clone()), k8s).await.unwrap();
         let secret_after_cron = secrets.get(secret_name).await.unwrap().data.unwrap();
         let username_after_cron = from_utf8(&secret_after_cron.get("username").unwrap().0).unwrap();
@@ -456,7 +456,7 @@ mod tests {
         let key_0 = String::from("v1.secret.runo.rocks/generate-0");
         let value_0 = String::from("username");
 
-        let key_1 = String::from("v1.secret.runo.rocks/regeneration-cron-0");
+        let key_1 = String::from("v1.secret.runo.rocks/renewal-cron-0");
         let value_1 = String::from("* * * * *");
 
         let post_params = build_post_params();
