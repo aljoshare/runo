@@ -1,6 +1,4 @@
-use crate::annotations::{
-    already_generated, charset, id_iter, length, needs_regeneration, pattern,
-};
+use crate::annotations::{already_generated, charset, id_iter, length, needs_renewal, pattern};
 use chrono::{DateTime, Utc};
 use k8s_openapi::api::core::v1::Secret;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
@@ -89,9 +87,9 @@ fn update_annotations(obj: &Arc<Secret>) -> BTreeMap<String, String> {
             let now: DateTime<Utc> = SystemTime::now().into();
             secret_annotations.insert(generated_at_v1, now.timestamp().to_string());
         }
-        if needs_regeneration(obj, id.as_str()) {
+        if needs_renewal(obj, id.as_str()) {
             secret_annotations.insert(
-                format!("v1.secret.runo.rocks/regenerate-{}", id),
+                format!("v1.secret.runo.rocks/renewal-{}", id),
                 "false".to_string(),
             );
         }
@@ -113,12 +111,8 @@ fn update_data(obj: &Arc<Secret>) -> BTreeMap<String, ByteString> {
             );
             secret_data = update_data_field(secret_data, obj, &id);
         }
-        if needs_regeneration(obj, id.as_str()) {
-            debug!(
-                "{:?} for id {:?} needs to be regenerated",
-                obj.name_any(),
-                id
-            );
+        if needs_renewal(obj, id.as_str()) {
+            debug!("{:?} for id {:?} needs to be renewed", obj.name_any(), id);
             secret_data = update_data_field(secret_data, obj, &id);
         }
     }
@@ -292,35 +286,35 @@ mod tests {
     }
 
     #[test]
-    fn test_update_annotations_needs_regeneration() {
+    fn test_update_annotations_needs_renewal() {
         let key_1 = String::from("v1.secret.runo.rocks/generate-0");
         let value_1 = String::from("username");
-        let key_2 = String::from("v1.secret.runo.rocks/regenerate-0");
+        let key_2 = String::from("v1.secret.runo.rocks/renewal-0");
         let value_2 = String::from("true");
         let secret = build_secret_with_annotations(vec![(key_1, value_1), (key_2, value_2)]);
         let annotations = update_annotations(&Arc::from(secret));
-        assert!(annotations.contains_key("v1.secret.runo.rocks/regenerate-0"));
-        let needs_regeneration: bool = annotations
-            .get("v1.secret.runo.rocks/regenerate-0")
+        assert!(annotations.contains_key("v1.secret.runo.rocks/renewal-0"));
+        let needs_renewal: bool = annotations
+            .get("v1.secret.runo.rocks/renewal-0")
             .unwrap()
             .parse()
             .unwrap();
-        assert!(!needs_regeneration);
+        assert!(!needs_renewal);
     }
 
     #[test]
-    fn test_update_annotations_no_need_for_regeneration() {
-        let key_1 = String::from("v1.secret.runo.rocks/regenerate-0");
+    fn test_update_annotations_no_need_for_renewal() {
+        let key_1 = String::from("v1.secret.runo.rocks/renewal-0");
         let value_1 = String::from("false");
         let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
         let annotations = update_annotations(&Arc::from(secret));
-        assert!(annotations.contains_key("v1.secret.runo.rocks/regenerate-0"));
-        let needs_regeneration: bool = annotations
-            .get("v1.secret.runo.rocks/regenerate-0")
+        assert!(annotations.contains_key("v1.secret.runo.rocks/renewal-0"));
+        let needs_renewal: bool = annotations
+            .get("v1.secret.runo.rocks/renewal-0")
             .unwrap()
             .parse()
             .unwrap();
-        assert!(!needs_regeneration);
+        assert!(!needs_renewal);
     }
 
     #[test]

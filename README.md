@@ -96,7 +96,7 @@ data:
 ```
 A more powerful approach is the use of a regular expression to specify the pattern of the field. The generator is using the [rand_regex](https://crates.io/crates/rand_regex) crate for the actual generation.
 
-v1.secret.runo.rocks/regeneration-cron
+v1.secret.runo.rocks/renewal-cron
 ----
 ```
 apiVersion: v1
@@ -109,7 +109,7 @@ metadata:
     v1.secret.runo.rocks/generate-${ID}: ${FIELD_NAME} # Example: password
     v1.secret.runo.rocks/length-${ID}: ${LENGTH_OF_THE_VALUE} # Example: 5
     v1.secret.runo.rocks/pattern-${ID}: ${CHARSET} # Example: abcd
-    v1.secret.runo.rocks/regeneration-cron-${ID}: ${CRON_SPEC}
+    v1.secret.runo.rocks/renewal-cron-${ID}: ${CRON_SPEC}
 type: Opaque
 data:
 ```

@@ -25,11 +25,11 @@ pub fn already_generated(obj: &Arc<Secret>, id: &str) -> bool {
     obj.annotations().contains_key(&generated_at_v1)
 }
 
-pub fn needs_regeneration(obj: &Arc<Secret>, id: &str) -> bool {
-    let regeneration_v1 = format!("v1.secret.runo.rocks/regenerate-{}", id);
-    match obj.annotations().get(&regeneration_v1) {
+pub fn needs_renewal(obj: &Arc<Secret>, id: &str) -> bool {
+    let renewal_v1 = format!("v1.secret.runo.rocks/renewal-{}", id);
+    match obj.annotations().get(&renewal_v1) {
         Some(val) => {
-            debug!("Value of annotation {:?} is {:?}", regeneration_v1, val);
+            debug!("Value of annotation {:?} is {:?}", renewal_v1, val);
             match val.parse() {
                 Ok(bool_val) => bool_val,
                 Err(e) => {
@@ -39,15 +39,15 @@ pub fn needs_regeneration(obj: &Arc<Secret>, id: &str) -> bool {
             }
         }
         None => {
-            debug!("No regeneration needed {:?}", regeneration_v1);
+            debug!("No renewal needed {:?}", renewal_v1);
             false
         }
     }
 }
 
 pub fn has_cron(obj: &Arc<Secret>, id: &str) -> bool {
-    let regeneration_cron = regeneration_cron(obj, id);
-    !regeneration_cron.is_default()
+    let renewal_cron = renewal_cron(obj, id);
+    !renewal_cron.is_default()
 }
 
 pub fn length(obj: &Arc<Secret>, id: &str) -> AnnotationResult<usize> {
@@ -113,10 +113,10 @@ pub fn generated_at<'a>(obj: &'a Arc<Secret>, id: &str) -> AnnotationResult<&'a 
     _annotation_result(obj, generated_at_v1, default_generated_at)
 }
 
-pub fn regeneration_cron<'a>(obj: &'a Arc<Secret>, id: &str) -> AnnotationResult<&'a str> {
-    let regeneration_cron_v1 = format!("v1.secret.runo.rocks/regeneration-cron-{}", id);
+pub fn renewal_cron<'a>(obj: &'a Arc<Secret>, id: &str) -> AnnotationResult<&'a str> {
+    let renewal_cron_v1 = format!("v1.secret.runo.rocks/renewal-cron-{}", id);
     let default_cron = "";
-    _annotation_result(obj, regeneration_cron_v1, default_cron)
+    _annotation_result(obj, renewal_cron_v1, default_cron)
 }
 
 pub fn key<'a>(obj: &'a Arc<Secret>, id: &str) -> AnnotationResult<&'a str> {
@@ -176,36 +176,36 @@ mod tests {
     }
 
     #[test]
-    fn v1_needs_regeneration_is_true() {
-        let key_1 = String::from("v1.secret.runo.rocks/regenerate-0");
+    fn v1_needs_renewal_is_true() {
+        let key_1 = String::from("v1.secret.runo.rocks/renewal-0");
         let value_1 = String::from("true");
         let key_2 = String::from("test-annotation");
         let value_2 = String::from("true");
         let secret = build_secret_with_annotations(vec![(key_1, value_1), (key_2, value_2)]);
         assert_eq!(
-            crate::annotations::needs_regeneration(&Arc::new(secret), "0"),
+            crate::annotations::needs_renewal(&Arc::new(secret), "0"),
             true
         );
     }
 
     #[test]
-    fn v1_needs_regeneration_no_valid_annotation() {
+    fn v1_needs_renewal_no_valid_annotation() {
         let key_1 = String::from("v1.secret.runo.rocks/not-a-valid-annotation");
         let value_1 = String::from("true");
         let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
         assert_eq!(
-            crate::annotations::needs_regeneration(&Arc::new(secret), "0"),
+            crate::annotations::needs_renewal(&Arc::new(secret), "0"),
             false
         );
     }
 
     #[test]
-    fn v1_needs_regeneration_parse_error() {
-        let key_1 = String::from("v1.secret.runo.rocks/regenerate-0");
+    fn v1_needs_renewal_parse_error() {
+        let key_1 = String::from("v1.secret.runo.rocks/renewal-0");
         let value_1 = String::from("1");
-        let key_2 = String::from("v1.secret.runo.rocks/regenerate-1");
+        let key_2 = String::from("v1.secret.runo.rocks/renewal-1");
         let value_2 = String::from("True");
-        let key_3 = String::from("v1.secret.runo.rocks/regenerate-2");
+        let key_3 = String::from("v1.secret.runo.rocks/renewal-2");
         let value_3 = String::from("");
         let secret = build_secret_with_annotations(vec![
             (key_1, value_1),
@@ -213,11 +213,11 @@ mod tests {
             (key_3, value_3),
         ]);
         assert_eq!(
-            crate::annotations::needs_regeneration(&Arc::new(secret.clone()), "0"),
+            crate::annotations::needs_renewal(&Arc::new(secret.clone()), "0"),
             false
         );
         assert_eq!(
-            crate::annotations::needs_regeneration(&Arc::new(secret), "1"),
+            crate::annotations::needs_renewal(&Arc::new(secret), "1"),
             false
         );
     }
@@ -340,17 +340,17 @@ mod tests {
 
     #[test]
     fn v1_has_cron_is_true() {
-        let key = String::from("v1.secret.runo.rocks/regeneration-cron-0");
+        let key = String::from("v1.secret.runo.rocks/renewal-cron-0");
         let value = String::from("true");
         let secret = build_secret_with_annotations(vec![(key, value)]);
         assert_eq!(crate::annotations::has_cron(&Arc::new(secret), "0"), true);
     }
 
     #[test]
-    fn v1_cron_regeneration_cron_returns_default() {
+    fn v1_cron_renewal_cron_returns_default() {
         let secret = build_secret_with_annotations(vec![]);
         assert_eq!(
-            crate::annotations::regeneration_cron(&Arc::new(secret), "0").is_default(),
+            crate::annotations::renewal_cron(&Arc::new(secret), "0").is_default(),
             true
         );
     }

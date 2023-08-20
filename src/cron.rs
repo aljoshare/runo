@@ -1,5 +1,5 @@
 use crate::annotations;
-use crate::annotations::{id_iter, regeneration_cron, AnnotationResult};
+use crate::annotations::{id_iter, renewal_cron, AnnotationResult};
 use crate::errors::NoNamespaceForSecret;
 use crate::k8s::K8s;
 use k8s_openapi::api::batch::v1::{CronJob, CronJobSpec, JobSpec, JobTemplateSpec};
@@ -12,7 +12,7 @@ use std::sync::Arc;
 use tracing::{debug, error};
 
 fn build_cronjob(obj: &Arc<Secret>, secret_name: &str, id: &str) -> CronJob {
-    let cron_spec = regeneration_cron(obj, id);
+    let cron_spec = renewal_cron(obj, id);
     debug!(
         "Will create cron job with pattern {:?} for {:?} and id {}",
         cron_spec.get_value(),
@@ -71,7 +71,7 @@ fn build_containers(secret_name: &str, id: &str) -> Vec<Container> {
             "--overwrite".to_string(),
             "secrets".to_string(),
             secret_name.to_string(),
-            format!("v1.secret.runo.rocks/regenerate-{}=true", id),
+            format!("v1.secret.runo.rocks/renewal-{}=true", id),
         ]),
         command: None,
         image: Some("cgr.dev/chainguard/kubectl".to_string()),
@@ -119,7 +119,7 @@ async fn create_or_replace(cj: CronJob, namespace: &str, k8s: &Arc<K8s>) {
 pub fn build_cron_name(obj: &Arc<Secret>, id: &str) -> String {
     let mut trunc_obj_name = obj.name_any();
     trunc_obj_name.truncate(20);
-    format!("runo-regeneration-{}-{}", trunc_obj_name, id)
+    format!("runo-renewal-{}-{}", trunc_obj_name, id)
 }
 
 pub async fn update(obj: &Arc<Secret>, kube: &Arc<K8s>) {
