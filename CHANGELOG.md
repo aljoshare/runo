@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased](https://github.com/aljoshare/runo/compare/v0.1.4...HEAD) (2023-08-20)
+## [Unreleased](https://github.com/aljoshare/runo/compare/v0.1.4...HEAD) (2023-08-26)
 
 ### Features
 
@@ -9,6 +9,8 @@
 
 ### Fixes
 
+* **annotations:** change default pattern to ascii-only
+([b99a846](https://github.com/aljoshare/runo/commit/b99a8460dc13d5a4895b6864161af63ed3e28c15))
 * **deps:** bump rand_regex from 0.15.1 to 0.16.0
 ([40774c7](https://github.com/aljoshare/runo/commit/40774c7e0c03806306de866c2d5e2f8fcd157855))
 * **annotations:** linting error
