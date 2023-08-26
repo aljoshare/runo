@@ -102,7 +102,7 @@ pub fn charset<'a>(obj: &'a Arc<Secret>, id: &str) -> AnnotationResult<&'a str> 
 
 pub fn pattern<'a>(obj: &'a Arc<Secret>, id: &str) -> AnnotationResult<&'a str> {
     let length_v1 = format!("v1.secret.runo.rocks/pattern-{}", id);
-    let default_pattern = "[\\S]";
+    let default_pattern = "[a-zA-Z0-9\\-\\_\\(\\)\\%\\$\\@]";
     _annotation_result(obj, length_v1, default_pattern)
 }
 
