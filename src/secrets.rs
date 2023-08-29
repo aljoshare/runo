@@ -179,8 +179,6 @@ mod tests {
     use k8s_openapi::api::core::v1::Secret;
     use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
 
-    use k8s_openapi::ByteString;
-
     use regex::Regex;
     use std::collections::BTreeMap;
     use std::sync::Arc;
