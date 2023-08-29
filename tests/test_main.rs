@@ -1,5 +1,4 @@
 use assert_cmd::Command;
-use std::net::TcpListener;
 
 #[test]
 fn runs() {

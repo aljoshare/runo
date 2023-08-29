@@ -138,7 +138,7 @@ mod tests {
             .await
             .unwrap();
         let client = Client::try_from(config).unwrap();
-        let k8s = Arc::new((K8s::new(false)));
+        let k8s = Arc::new(K8s::new(false));
 
         let key_0 = String::from("v1.secret.runo.rocks/generate-0");
         let value_0 = String::from("username");
@@ -191,7 +191,7 @@ mod tests {
             .await
             .unwrap();
         let client = Client::try_from(config).unwrap();
-        let k8s = Arc::new((K8s::new(false)));
+        let k8s = Arc::new(K8s::new(false));
 
         let key_0 = String::from("v1.secret.runo.rocks/generate-0");
         let value_0 = String::from("username");
@@ -228,7 +228,7 @@ mod tests {
             .await
             .unwrap();
         let client = Client::try_from(config).unwrap();
-        let k8s = Arc::new((K8s::new(false)));
+        let k8s = Arc::new(K8s::new(false));
 
         let key_1 = String::from("v1.secret.runo.rocks/generate-0");
         let value_1 = String::from("username");
@@ -267,7 +267,7 @@ mod tests {
             .await
             .unwrap();
         let client = Client::try_from(config).unwrap();
-        let k8s = Arc::new((K8s::new(false)));
+        let k8s = Arc::new(K8s::new(false));
 
         let key_1 = String::from("v1.secret.runo.rocks/generate-0");
         let value_1 = String::from("username");
@@ -308,7 +308,7 @@ mod tests {
             .await
             .unwrap();
         let client = Client::try_from(config).unwrap();
-        let k8s = Arc::new((K8s::new(false)));
+        let k8s = Arc::new(K8s::new(false));
 
         let key_1 = String::from("v1.secret.runo.rocks/generate-0");
         let value_1 = String::from("username");
@@ -349,7 +349,7 @@ mod tests {
             .await
             .unwrap();
         let client = Client::try_from(config).unwrap();
-        let k8s = Arc::new((K8s::new(false)));
+        let k8s = Arc::new(K8s::new(false));
 
         let key_1 = String::from("v1.secret.runo.rocks/generate-0");
         let value_1 = String::from("username");
@@ -418,7 +418,7 @@ mod tests {
             .await
             .unwrap();
         let client = Client::try_from(config).unwrap();
-        let k8s = Arc::new((K8s::new(true)));
+        let k8s = Arc::new(K8s::new(true));
 
         let key_0 = String::from("v1.secret.runo.rocks/generate-0");
         let value_0 = String::from("username");
@@ -451,7 +451,7 @@ mod tests {
             .await
             .unwrap();
         let client = Client::try_from(config).unwrap();
-        let k8s = Arc::new((K8s::new(true)));
+        let k8s = Arc::new(K8s::new(true));
 
         let key_0 = String::from("v1.secret.runo.rocks/generate-0");
         let value_0 = String::from("username");
