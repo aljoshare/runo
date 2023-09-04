@@ -33,6 +33,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -44,4 +47,5 @@ jobs:
           version: latest
       - name: Check if all commits are conventional
         run: |
+          git --no-pager log --decorate=short --pretty=oneline -n 50
           convco check
