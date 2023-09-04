@@ -1,13 +1,75 @@
 # Changelog
 
-## [Unreleased](https://github.com/aljoshare/runo/compare/v0.1.4...HEAD) (2023-08-26)
+## [v0.2.0](https://github.com/aljoshare/runo/compare/v0.1.5...v0.2.0) (2023-09-04)
 
 ### Features
 
 * rename regeneration to renewal everywhere
-([b6a2436](https://github.com/aljoshare/runo/commit/b6a2436a72c4a63456e94fb3b66c7864815573e1))
+([486a83b](https://github.com/aljoshare/runo/commit/486a83b8da18ef68b8982d5c10bb6a10290ce3fa))
+* **reconciler:** check if the secrets has the managed label
+([cdc3ff1](https://github.com/aljoshare/runo/commit/cdc3ff11a5b24ab66a166e2c524ad2f6660da28d))
+* add labels.rs
+([a60bb4b](https://github.com/aljoshare/runo/commit/a60bb4bb4790a1dff8062719b2ee542358e0cbb1))
+* add support for one-shot mode
+([ac7660f](https://github.com/aljoshare/runo/commit/ac7660fd41f54f5bd5ada47e5374567036fab60f))
 
 ### Fixes
+
+* **deps:** Bump clap from 4.4.1 to 4.4.2
+([3470c7b](https://github.com/aljoshare/runo/commit/3470c7b44bb428eea3d6ed09906eef97314ba694))
+* **deps:** Bump chrono from 0.4.26 to 0.4.28
+([5366301](https://github.com/aljoshare/runo/commit/5366301f70112fdbd12bf096e7638298be995473))
+* **deps:** Bump actix-web from 4.3.1 to 4.4.0
+([4f13d0c](https://github.com/aljoshare/runo/commit/4f13d0c1081586c4071129318c6e3dbca256df3a))
+* **deps:** Bump clap from 4.4.0 to 4.4.1
+([4fddfe4](https://github.com/aljoshare/runo/commit/4fddfe4710b797aab06231bcbbefbbffc8bd86f3))
+* **deps:** Bump regex from 1.9.3 to 1.9.4
+([d3d7d4a](https://github.com/aljoshare/runo/commit/d3d7d4afa4e9dce501833d3659b49b86033ce5a6))
+* **annotations:** change default pattern to ascii-only
+([8246393](https://github.com/aljoshare/runo/commit/8246393ed359a19e3c4ae99943323c6097589ae4))
+* **deps:** Bump clap from 4.3.24 to 4.4.0
+([3c468c1](https://github.com/aljoshare/runo/commit/3c468c12a00a27720820147fd5b7dbbf47c2db86))
+* **deps:** Bump clap from 4.3.23 to 4.3.24
+([0a89f95](https://github.com/aljoshare/runo/commit/0a89f95807b29b9f83c8dae18fa1f0f126499c5a))
+* **deps:** Bump clap from 4.3.19 to 4.3.23
+([319894e](https://github.com/aljoshare/runo/commit/319894e6aa4c6460725980ffb361a09fd035c93b))
+* **deps:** Bump thiserror from 1.0.46 to 1.0.47
+([3ff720c](https://github.com/aljoshare/runo/commit/3ff720cc1b8d299b93b4a34594ef130a161c61b2))
+* **deps:** Bump anyhow from 1.0.74 to 1.0.75
+([e03aedf](https://github.com/aljoshare/runo/commit/e03aedfc38ac9f090e05b2cc3e99903637919a05))
+* **deps:** Bump tokio from 1.30.0 to 1.32.0
+([6f46f16](https://github.com/aljoshare/runo/commit/6f46f16b5a225247ab1c14fce3d054c5d008772f))
+* **deps:** Bump thiserror from 1.0.44 to 1.0.46
+([98f8bd6](https://github.com/aljoshare/runo/commit/98f8bd6387971638c9e3cf5a866bd019014cce98))
+* **deps:** bump rand_regex from 0.15.1 to 0.16.0
+([46f74f4](https://github.com/aljoshare/runo/commit/46f74f418c0de0c7a0d61c9ed4d1f0da673a81ee))
+* **deps:** Bump anyhow from 1.0.72 to 1.0.74
+([3a8c009](https://github.com/aljoshare/runo/commit/3a8c00958795538d261fd67e1c58dd41e9dd88e4))
+* **annotations:** linting error
+([d6832cc](https://github.com/aljoshare/runo/commit/d6832cc80e04403b7f2a855d4fba45d8d5a231bf))
+* **deps:** bump tokio from 1.29.1 to 1.30.0
+([ed3b010](https://github.com/aljoshare/runo/commit/ed3b0108e90b09e34445b2a9f68570e68ca4b674))
+* **deps:** bump k8s-openapi from 0.18.0 to 0.19.0
+([60ff566](https://github.com/aljoshare/runo/commit/60ff566fec3edddd42ec41380c10f6e0f2e48a86))
+* **deps:** bump kube from 0.84.0 to 0.85.0
+([fe37566](https://github.com/aljoshare/runo/commit/fe3756600b2bd08a27a0e9da5bfb3ae43c005c6b))
+* **deps:** bump regex from 1.9.1 to 1.9.3
+([b5bed5e](https://github.com/aljoshare/runo/commit/b5bed5e9ef4235b7980df620051fe61f9f0d8c9a))
+* **deps:** bump clap from 4.3.17 to 4.3.19
+([f2f1fa2](https://github.com/aljoshare/runo/commit/f2f1fa2459d1435e88252be5a5cd689b32544e25))
+* **deps:** bump thiserror from 1.0.43 to 1.0.44
+([f5e25ec](https://github.com/aljoshare/runo/commit/f5e25ec3ebe04a4b0eb8fef852e92346a843452e))
+* **deps:** bump serde_yaml from 0.9.22 to 0.9.25
+([5a9f593](https://github.com/aljoshare/runo/commit/5a9f59307b5bd01ad039afbe4e6f9b11beae4836))
+
+### [v0.1.5](https://github.com/aljoshare/runo/compare/v0.1.4...v0.1.5) (2023-08-26)
+
+#### Features
+
+* rename regeneration to renewal everywhere
+([b6a2436](https://github.com/aljoshare/runo/commit/b6a2436a72c4a63456e94fb3b66c7864815573e1))
+
+#### Fixes
 
 * **annotations:** change default pattern to ascii-only
 ([b99a846](https://github.com/aljoshare/runo/commit/b99a8460dc13d5a4895b6864161af63ed3e28c15))
