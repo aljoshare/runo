@@ -11,8 +11,4 @@ updates:
       interval: "daily"
     commit-message:
       prefix: "fix(deps)"
-    groups:
-      kube-rs-k8s-openapi:
-        patterns:
-          - "kube"
-          - "k8s-openapi"
+      include: "scope"
