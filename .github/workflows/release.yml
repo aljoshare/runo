@@ -40,6 +40,9 @@ jobs:
         run: |
           cd target/release
           sha256sum runo > checksum.txt
+      - name: Generate changelog
+        run: |
+          convco changelog $(git tag --list --sort=version:refname | tail -2 | head -1 )..$(git tag --list --sort=version:refname | tail -1 ) > CHANGELOG.md
       - name: Create Github release
         uses: ncipollo/release-action@v1
         with:
