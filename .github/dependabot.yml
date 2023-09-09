@@ -10,5 +10,5 @@ updates:
     schedule:
       interval: "daily"
     commit-message:
-      prefix: "fix(deps)"
+      prefix: "fix"
       include: "scope"
