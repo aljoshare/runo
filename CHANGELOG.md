@@ -1,5 +1,16 @@
 # Changelog
 
+### [v0.2.1](https://github.com/aljoshare/runo/compare/v0.2.0...v0.2.1) (2023-09-13)
+
+#### Fixes
+
+* **deps:** bump k8s-openapi to 0.20.0
+([f2012d8](https://github.com/aljoshare/runo/commit/f2012d88a905896d8ac67558fc42e6c8aa832d0a))
+* **deps:** bump kube to 0.86.0
+([336c4f9](https://github.com/aljoshare/runo/commit/336c4f95ca60935fa141c9049290ded4c5c55dd6))
+* **deps:** bump chrono to 0.4.30
+([dbc229b](https://github.com/aljoshare/runo/commit/dbc229ba6388b6451a895de94e2b824f45b6bb6f))
+
 ## [v0.2.0](https://github.com/aljoshare/runo/compare/v0.1.5...v0.2.0) (2023-09-04)
 
 ### Features
