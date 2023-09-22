@@ -8,7 +8,7 @@ pub struct K8s {
 }
 
 impl K8s {
-    pub fn new(dry_run: bool) -> K8s {
+    pub fn build(dry_run: bool) -> K8s {
         if dry_run {
             info!("Running runo in dry-run mode!")
         }

@@ -156,7 +156,7 @@ fn get_updated_secret(obj: &Arc<Secret>) -> Secret {
     }
 }
 
-pub async fn update(obj: &Arc<Secret>, k8s: &Arc<K8s>) {
+pub async fn update(obj: &Arc<Secret>, k8s: &K8s) {
     let secrets: Api<Secret> =
         Api::namespaced(K8s::get_client().await, obj.namespace().unwrap().as_str());
     match secrets

@@ -99,7 +99,7 @@ fn build_security_context() -> Option<SecurityContext> {
     })
 }
 
-async fn create_or_replace(cj: CronJob, namespace: &str, k8s: &Arc<K8s>) {
+async fn create_or_replace(cj: CronJob, namespace: &str, k8s: &K8s) {
     let cronjobs: Api<CronJob> = Api::namespaced(K8s::get_client().await, namespace);
     let c = cronjobs.create(&k8s.get_post_params(), &cj).await;
     match c {
@@ -122,7 +122,7 @@ pub fn build_cron_name(obj: &Arc<Secret>, id: &str) -> String {
     format!("runo-renewal-{}-{}", trunc_obj_name, id)
 }
 
-pub async fn update(obj: &Arc<Secret>, kube: &Arc<K8s>) {
+pub async fn update(obj: &Arc<Secret>, k8s: &K8s) {
     match obj.namespace() {
         Some(namespace) => {
             for id in id_iter(obj) {
@@ -133,7 +133,7 @@ pub async fn update(obj: &Arc<Secret>, kube: &Arc<K8s>) {
                         id
                     );
                     let cj = build_cronjob(obj, obj.name_any().as_str(), &id);
-                    create_or_replace(cj, &namespace, kube).await
+                    create_or_replace(cj, &namespace, k8s).await
                 }
             }
         }
