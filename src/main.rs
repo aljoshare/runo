@@ -1,4 +1,5 @@
 mod annotations;
+mod config;
 mod cron;
 mod errors;
 mod http;
@@ -11,6 +12,7 @@ mod secrets;
 use crate::k8s::K8s;
 use anyhow::anyhow;
 use clap::Parser;
+use config::RunoConfig;
 use tracing::info;
 
 #[derive(Parser)]
@@ -22,6 +24,8 @@ struct MainArgs {
     dry_run: bool,
     #[clap(long, default_value_t = String::from("reconciliation"))]
     mode: String,
+    #[clap(long, default_value_t = 300)]
+    requeue_duration: u64,
 }
 
 #[tokio::main]
@@ -31,12 +35,13 @@ async fn main() -> anyhow::Result<()> {
         true => info!("Logging initialized.."),
         false => panic!("Logging not initialized properly!. Exiting..."),
     }
-    let k8s = K8s::new(args.dry_run);
+    let k8s = K8s::build(args.dry_run);
+    let config = RunoConfig::build(k8s, args.requeue_duration);
     match args.mode.as_str() {
         "reconciliation" => {
             info!("Running runo in reconciliation mode.");
             let http_server_result = http::run_http_server(args.http_port);
-            let reconciler = reconciler::run_with_reconciliation(k8s);
+            let reconciler = reconciler::run_with_reconciliation(config);
             match http_server_result {
                 Ok(http_server) => {
                     tokio::join!(reconciler, http_server).1.unwrap();
@@ -47,7 +52,7 @@ async fn main() -> anyhow::Result<()> {
         }
         "one-shot" => {
             info!("Running runo in one-shot mode.");
-            reconciler::run_one_shot(k8s).await;
+            reconciler::run_one_shot(config).await;
             Ok(())
         }
         _ => Err(anyhow!("Mode is not supported!: {:?}", args.mode)),

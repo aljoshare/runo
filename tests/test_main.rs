@@ -40,3 +40,15 @@ fn dry_run() {
         .assert()
         .interrupted();
 }
+
+#[test]
+fn requeue_duration() {
+    let mut cmd = Command::cargo_bin("runo").unwrap();
+    cmd.arg("--requeue-duration")
+        .arg("10")
+        .arg("--http-port")
+        .arg("0")
+        .timeout(std::time::Duration::from_secs(1))
+        .assert()
+        .interrupted();
+}
