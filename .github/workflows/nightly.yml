@@ -37,7 +37,7 @@ jobs:
         with:
           token: ${{secrets.CODECOV_TOKEN}}
       - name: Archive code coverage results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: code-coverage-report
           path: cobertura.xml
@@ -71,13 +71,13 @@ jobs:
         run: |
           sha256sum ${{ matrix.recipe.target }} > checksum.txt
       - name: Archive checksum.txt
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.recipe.target }}-checksum
           path: checksum.txt
           retention-days: 30
       - name: Archive artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.recipe.target }}
           path: target/${{ matrix.recipe.target }}/debug/runo
@@ -128,7 +128,7 @@ jobs:
           digest="${{ steps.build.outputs.digest }}"
           touch "/tmp/digests/${digest#sha256:}" 
       - name: Upload digest
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: digests
           path: /tmp/digests/*
@@ -172,7 +172,7 @@ jobs:
       - name: Merge checksum.txt files
         run: for i in  *-checksum ; do cat $i/checksum.txt >> checksums.txt; done
       - name: Upload checksums.txt
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: checksums
           path: checksums.txt
