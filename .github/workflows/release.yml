@@ -74,7 +74,7 @@ jobs:
           crate: cargo-release
           version: latest
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
       - name: Merge checksum.txt files
         run: for i in  *-checksum ; do cat $i/checksum.txt >> checksums.txt; done
       - name: Generate changelog
@@ -115,7 +115,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Download a single artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ matrix.recipe.target }}
       - name: Build and push image
@@ -146,7 +146,7 @@ jobs:
         packages: write
     steps:
       - name: Download digests
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: digests
           path: /tmp/digests
