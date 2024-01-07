@@ -1,5 +1,30 @@
 # Changelog
 
+### [v0.2.4](https://github.com/aljoshare/runo/compare/v0.2.3...v0.2.4) (2024-01-07)
+
+#### Fixes
+
+* **deps:** bump clap from 4.4.12 to 4.4.13
+([a0c21b3](https://github.com/aljoshare/runo/commit/a0c21b39c9c406a1743c21299291f83ea1cd8215))
+* **deps:** bump futures from 0.3.29 to 0.3.30
+([8461672](https://github.com/aljoshare/runo/commit/846167248d5856ca4c524c6f5d81b59ff63534e6))
+* **deps:** bump actix-web from 4.4.0 to 4.4.1
+([e4f7459](https://github.com/aljoshare/runo/commit/e4f74599ad2fc1accbce814d83b80b322c5bbd1a))
+* **deps:** bump thiserror from 1.0.50 to 1.0.56
+([8b61264](https://github.com/aljoshare/runo/commit/8b61264fa31c704d27fe003c65537ea62a6260cc))
+* **deps:** bump anyhow from 1.0.75 to 1.0.79
+([1882545](https://github.com/aljoshare/runo/commit/188254539446a467c5abdb6bee56dcffa73d79b0))
+* **deps:** bump kube from 0.87.1 to 0.87.2
+([ef0214e](https://github.com/aljoshare/runo/commit/ef0214e9695cc0f9bf1f38a856a4c077a77b0e17))
+* **deps:** bump serde_yaml from 0.9.27 to 0.9.29
+([ab43a79](https://github.com/aljoshare/runo/commit/ab43a793434aa984ad9a47e71a12bcdf2703fd7d))
+* **deps:** bump tokio from 1.34.0 to 1.35.1
+([a85048b](https://github.com/aljoshare/runo/commit/a85048b42a36dbb0ccefe01fbf92397b588602de))
+* **deps:** bump unsafe-libyaml from 0.2.9 to 0.2.10
+([d951068](https://github.com/aljoshare/runo/commit/d95106824977de3a83e265542b9818391b612d26))
+* **deps:** bump clap from 4.4.10 to 4.4.12
+([a3f7acf](https://github.com/aljoshare/runo/commit/a3f7acfabcd16aaedbd91a5d02f869e92c2dd761))
+
 ### [v0.2.3](https://github.com/aljoshare/runo/compare/v0.2.2...v0.2.3) (2023-11-30)
 
 #### Fixes
