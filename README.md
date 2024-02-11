@@ -125,3 +125,7 @@ Please deploy rūnō via the [available Helm chart](https://github.com/AljoschaP
 
 - [kubernetes-secrets-generator](https://github.com/mittwald/kubernetes-secret-generator): A secrets generator written by the awesome guys of Mittwald. If you want to create SSH key pairs or Ingress Basic Auth, try the kubernetes-secrets-generator. 
 - [secretize](https://github.com/bbl/secretize): A plugin for kubectl, which generates Kubernetes secrets based on different data sources (e.g. AWS Secrets Manager, Azure Vault, Hashicorp Vault). If you don't want to deploy a component into your cluster, this one.
+
+## Kubernetes Versions
+
+Because rūnō uses [kube.rs](https://kube.rs), it matches its [compatibility matrix](https://kube.rs/kubernetes-version/), which usually matches the stable channel support of the major cloud providers.
