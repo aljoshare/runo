@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - v*.*.*
+    branches:
+      - ci/**
 
 env:
   REGISTRY: ghcr.io
@@ -81,6 +83,7 @@ jobs:
         run: |
           convco changelog $(git tag --list --sort=version:refname | tail -2 | head -1 )..$(git tag --list --sort=version:refname | tail -1 ) > CHANGELOG.md
       - name: Create Github release
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         uses: ncipollo/release-action@v1
         with:
           artifacts: "checksums.txt"
