@@ -1,5 +1,18 @@
 # Changelog
 
+### [v0.2.6](https://github.com/aljoshare/runo/compare/v0.2.5...v0.2.6) (2024-02-13)
+
+#### Fixes
+
+* **deps:** bump actix-web from 4.4.1 to 4.5.1
+([8283deb](https://github.com/aljoshare/runo/commit/8283deb11a665ae6e5c65ede0fb6d8e62001bbb4))
+* **deps:** bump thiserror from 1.0.56 to 1.0.57
+([1f5ca78](https://github.com/aljoshare/runo/commit/1f5ca78e06b15fb746ec04be0e4f0769d05adf17))
+* **deps:** bump chrono from 0.4.33 to 0.4.34
+([d2f6d24](https://github.com/aljoshare/runo/commit/d2f6d24d4fde0ae41c4be5cc7a69da02e8bad91e))
+* **deps:** bump clap from 4.4.18 to 4.5.0
+([81ad514](https://github.com/aljoshare/runo/commit/81ad5146a154972cae76ac851d87c06c055b52eb))
+
 ### [v0.2.5](https://github.com/aljoshare/runo/compare/v0.2.4...v0.2.5) (2024-02-12)
 
 #### Fixes
