@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - v*.*.*
+    branches:
+      - ci/**
 
 env:
   REGISTRY: ghcr.io
@@ -81,6 +83,7 @@ jobs:
         run: |
           convco changelog $(git tag --list --sort=version:refname | tail -2 | head -1 )..$(git tag --list --sort=version:refname | tail -1 ) > CHANGELOG.md
       - name: Create Github release
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         uses: ncipollo/release-action@v1
         with:
           artifacts: "checksums.txt"
@@ -93,8 +96,8 @@ jobs:
       fail-fast: false
       matrix:
         recipe:
-          - { target: aarch64-unknown-linux-gnu, platform: linux/arm64 }
-          - { target: x86_64-unknown-linux-gnu, platform: linux/amd64 }
+          - { id: 0, target: aarch64-unknown-linux-gnu, platform: linux/arm64 }
+          - { id: 1, target: x86_64-unknown-linux-gnu, platform: linux/amd64 }
     permissions:
       contents: read
       packages: write
@@ -133,7 +136,7 @@ jobs:
       - name: Upload digest
         uses: actions/upload-artifact@v4
         with:
-          name: digests-${{ matrix.recipe }}
+          name: digests-${{ matrix.recipe.id }}
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
@@ -167,7 +170,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Create manifest list and push
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         working-directory: /tmp/digests
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@sha256:%s ' *)
+      - name: Create manifest list and push in dry-run mode
+        if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create --dry-run $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@sha256:%s ' *)
