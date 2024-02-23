@@ -3,6 +3,54 @@ use kube::ResourceExt;
 use std::sync::Arc;
 use tracing::{debug, error};
 
+enum V1Annotation {
+    Charset,
+    Generate,
+    GeneratedAt,
+    Length,
+    Pattern,
+    Renewal,
+    RenewalCron,
+}
+
+impl V1Annotation {
+    fn key(&self) -> String {
+        match *self {
+            V1Annotation::Charset => "v1.secret.runo.rocks/charset".to_string(),
+            V1Annotation::Generate => "v1.secret.runo.rocks/generate".to_string(),
+            V1Annotation::GeneratedAt => "v1.secret.runo.rocks/generated-at".to_string(),
+            V1Annotation::Length => "v1.secret.runo.rocks/length".to_string(),
+            V1Annotation::Pattern => "v1.secret.runo.rocks/pattern".to_string(),
+            V1Annotation::Renewal => "v1.secret.runo.rocks/renewal".to_string(),
+            V1Annotation::RenewalCron => "v1.secret.runo.rocks/renewal-cron".to_string(),
+        }
+    }
+    fn value(&self, id: &str) -> String {
+        match *self {
+            V1Annotation::Charset => format!("{}-{}", V1Annotation::Charset.key(), id),
+            V1Annotation::Generate => format!("{}-{}", V1Annotation::Generate.key(), id),
+            V1Annotation::GeneratedAt => format!("{}-{}", V1Annotation::GeneratedAt.key(), id),
+            V1Annotation::Length => format!("{}-{}", V1Annotation::Length.key(), id),
+            V1Annotation::Pattern => format!("{}-{}", V1Annotation::Pattern.key(), id),
+            V1Annotation::Renewal => format!("{}-{}", V1Annotation::Renewal.key(), id),
+            V1Annotation::RenewalCron => format!("{}-{}", V1Annotation::RenewalCron.key(), id),
+        }
+    }
+    fn default(&self) -> Option<String> {
+        match *self {
+            V1Annotation::Charset => {
+                Some("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".to_string())
+            }
+            V1Annotation::Generate => None,
+            V1Annotation::GeneratedAt => None,
+            V1Annotation::Length => Some("32".to_string()),
+            V1Annotation::Pattern => Some("[a-zA-Z0-9\\-\\_\\(\\)\\%\\$\\@]".to_string()),
+            V1Annotation::Renewal => None,
+            V1Annotation::RenewalCron => None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct AnnotationResult<T> {
     value: T,
@@ -20,13 +68,13 @@ impl<T> AnnotationResult<T> {
 }
 
 pub fn already_generated(obj: &Arc<Secret>, id: &str) -> bool {
-    let generated_at_v1 = format!("v1.secret.runo.rocks/generated-at-{}", id);
+    let generated_at_v1 = V1Annotation::GeneratedAt.value(id);
     println!("{:?}", obj.annotations().keys());
     obj.annotations().contains_key(&generated_at_v1)
 }
 
 pub fn needs_renewal(obj: &Arc<Secret>, id: &str) -> bool {
-    let renewal_v1 = format!("v1.secret.runo.rocks/renewal-{}", id);
+    let renewal_v1 = V1Annotation::Renewal.value(id);
     match obj.annotations().get(&renewal_v1) {
         Some(val) => {
             debug!("Value of annotation {:?} is {:?}", renewal_v1, val);
@@ -51,8 +99,7 @@ pub fn has_cron(obj: &Arc<Secret>, id: &str) -> bool {
 }
 
 pub fn length(obj: &Arc<Secret>, id: &str) -> AnnotationResult<usize> {
-    let length_v1 = format!("v1.secret.runo.rocks/length-{}", id);
-    let default_length = 32;
+    let length_v1 = V1Annotation::Length.value(id);
     return match obj.annotations().get(&length_v1) {
         Some(value) => {
             let length = value.parse::<i32>().unwrap() as usize;
@@ -63,77 +110,73 @@ pub fn length(obj: &Arc<Secret>, id: &str) -> AnnotationResult<usize> {
                 },
                 false => {
                     error!("Invalid length! Please set a length > 0 and <= 100. Proceeding with default length.");
-                    AnnotationResult {
-                        value: default_length,
-                        default: true,
+                    match V1Annotation::Length.default() {
+                        Some(default) => AnnotationResult {
+                            value: default.parse::<i32>().unwrap() as usize,
+                            default: true,
+                        },
+                        None => panic!("No default set for length! Panic!"),
                     }
                 }
             }
         }
-        None => AnnotationResult {
-            value: default_length,
-            default: true,
+        None => match V1Annotation::Length.default() {
+            Some(default) => AnnotationResult {
+                value: default.parse::<i32>().unwrap() as usize,
+                default: true,
+            },
+            None => panic!("No default set for length! Panic!"),
         },
     };
 }
 
-fn _annotation_result<'a>(
-    obj: &'a Arc<Secret>,
-    key: String,
-    default_value: &'a str,
-) -> AnnotationResult<&'a str> {
-    return match obj.annotations().get(&key) {
+fn _annotation_result(
+    obj: &Arc<Secret>,
+    annotation: V1Annotation,
+    id: &str,
+) -> AnnotationResult<String> {
+    return match obj.annotations().get(annotation.value(id).as_str()) {
         Some(value) => AnnotationResult {
-            value: value.as_str(),
+            value: value.to_string(),
             default: false,
         },
         None => AnnotationResult {
-            value: default_value,
+            value: annotation.default().unwrap_or("".to_string()),
             default: true,
         },
     };
 }
 
-pub fn charset<'a>(obj: &'a Arc<Secret>, id: &str) -> AnnotationResult<&'a str> {
-    let charset_v1 = format!("v1.secret.runo.rocks/charset-{}", id);
-    let default_charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    _annotation_result(obj, charset_v1, default_charset)
+pub fn charset(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
+    _annotation_result(obj, V1Annotation::Charset, id)
 }
 
-pub fn pattern<'a>(obj: &'a Arc<Secret>, id: &str) -> AnnotationResult<&'a str> {
-    let length_v1 = format!("v1.secret.runo.rocks/pattern-{}", id);
-    let default_pattern = "[a-zA-Z0-9\\-\\_\\(\\)\\%\\$\\@]";
-    _annotation_result(obj, length_v1, default_pattern)
+pub fn pattern(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
+    _annotation_result(obj, V1Annotation::Pattern, id)
 }
 
 #[allow(dead_code)]
-pub fn generated_at<'a>(obj: &'a Arc<Secret>, id: &str) -> AnnotationResult<&'a str> {
-    let generated_at_v1 = format!("v1.secret.runo.rocks/generated-at-{}", id);
-    let default_generated_at = "";
-    _annotation_result(obj, generated_at_v1, default_generated_at)
+pub fn generated_at(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
+    _annotation_result(obj, V1Annotation::GeneratedAt, id)
 }
 
-pub fn renewal_cron<'a>(obj: &'a Arc<Secret>, id: &str) -> AnnotationResult<&'a str> {
-    let renewal_cron_v1 = format!("v1.secret.runo.rocks/renewal-cron-{}", id);
-    let default_cron = "";
-    _annotation_result(obj, renewal_cron_v1, default_cron)
+pub fn renewal_cron(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
+    _annotation_result(obj, V1Annotation::RenewalCron, id)
 }
 
-pub fn key<'a>(obj: &'a Arc<Secret>, id: &str) -> AnnotationResult<&'a str> {
-    let generate_v1 = format!("v1.secret.runo.rocks/generate-{}", id);
-    let default_value = "";
-    _annotation_result(obj, generate_v1, default_value)
+pub fn key(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
+    _annotation_result(obj, V1Annotation::Generate, id)
 }
 
 pub fn id_iter(obj: &Arc<Secret>) -> Vec<String> {
     let generate_keys: Vec<_> = obj
         .annotations()
         .keys()
-        .filter(|p| p.contains("v1.secret.runo.rocks/generate-"))
+        .filter(|p| p.contains(format!("{}-", V1Annotation::Generate.key()).as_str()))
         .collect();
     let ids: Vec<_> = generate_keys
         .into_iter()
-        .map(|p| p.replace("v1.secret.runo.rocks/generate-", ""))
+        .map(|p| p.replace(format!("{}-", V1Annotation::Generate.key()).as_str(), ""))
         .collect();
     ids
 }
