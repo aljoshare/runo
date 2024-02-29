@@ -40,7 +40,7 @@ fn build_cronjob_spec(
     id: &str,
 ) -> Option<CronJobSpec> {
     Some(CronJobSpec {
-        schedule: cron_spec.get_value().into(),
+        schedule: cron_spec.get_value(),
         job_template: JobTemplateSpec {
             spec: Some(JobSpec {
                 template: PodTemplateSpec {
