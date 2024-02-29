@@ -27,10 +27,10 @@ pub fn generate_random_string(
     let random_string = if !charset.is_default() {
         Ok(generate_random_string_from_charset(
             length.get_value(),
-            charset.get_value(),
+            charset.get_value().as_str(),
         ))
     } else {
-        generate_random_string_from_pattern(length.get_value(), pattern.get_value())
+        generate_random_string_from_pattern(length.get_value(), pattern.get_value().as_str())
     };
     debug!("Generated random string: {:?}", random_string);
     random_string

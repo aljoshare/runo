@@ -15,7 +15,7 @@ fn build_cronjob(obj: &Arc<Secret>, secret_name: &str, id: &str) -> CronJob {
     let cron_spec = renewal_cron(obj, id);
     debug!(
         "Will create cron job with pattern {:?} for {:?} and id {}",
-        cron_spec.get_value(),
+        cron_spec.clone().get_value(),
         obj.name_any(),
         id
     );
@@ -35,12 +35,12 @@ fn build_cronjob_object_meta(cron_name: &str) -> ObjectMeta {
 }
 
 fn build_cronjob_spec(
-    cron_spec: AnnotationResult<&str>,
+    cron_spec: AnnotationResult<String>,
     secret_name: &str,
     id: &str,
 ) -> Option<CronJobSpec> {
     Some(CronJobSpec {
-        schedule: cron_spec.get_value().into(),
+        schedule: cron_spec.get_value(),
         job_template: JobTemplateSpec {
             spec: Some(JobSpec {
                 template: PodTemplateSpec {
