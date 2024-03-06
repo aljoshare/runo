@@ -1,5 +1,26 @@
 # Changelog
 
+### [v0.2.7](https://github.com/aljoshare/runo/compare/v0.2.6...v0.2.7) (2024-03-06)
+
+#### Fixes
+
+* **deps:** bump mio from 0.8.9 to 0.8.11
+([75afe86](https://github.com/aljoshare/runo/commit/75afe861df769f4d7193d4684b32db4f7b9fd27b))
+* **deps:** bump cron from 0.12.0 to 0.12.1
+([0ff1413](https://github.com/aljoshare/runo/commit/0ff1413e0255a1e02d060ae4ad4afe688f1eb03d))
+* **deps:** bump clap from 4.5.0 to 4.5.1
+([ed63b68](https://github.com/aljoshare/runo/commit/ed63b684ca8575651d050b672a0f185a210039c4))
+* **deps:** bump anyhow from 1.0.79 to 1.0.80
+([0a4aa58](https://github.com/aljoshare/runo/commit/0a4aa588cead2836a0d60cc036d26038537abf23))
+* **deps:** bump k8s-openapi from 0.21.0 to 0.21.1
+([1efb21f](https://github.com/aljoshare/runo/commit/1efb21f7277f4db3572e230eb21cbccff3ac9384))
+* **deps:** bump serde_yaml from 0.9.31 to 0.9.32
+([7a8d105](https://github.com/aljoshare/runo/commit/7a8d10516b914c21ee53f0952daf48842a48eb02))
+* **deps:** bump serde from 1.0.196 to 1.0.197
+([23b5bfa](https://github.com/aljoshare/runo/commit/23b5bfa5bc51d4364db72663034fc8efbd6ff72e))
+* **deps:** bump assert_cmd from 2.0.13 to 2.0.14
+([9f6e5c2](https://github.com/aljoshare/runo/commit/9f6e5c2ce19992adddd436c712f8fdb85ebd2402))
+
 ### [v0.2.6](https://github.com/aljoshare/runo/compare/v0.2.5...v0.2.6) (2024-02-13)
 
 #### Fixes
