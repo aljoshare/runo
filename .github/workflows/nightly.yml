@@ -33,7 +33,7 @@ jobs:
           version: latest
       - run: cargo tarpaulin --timeout 300 -o Xml
       - name: Upload to codecov.io
-        uses: codecov/codecov-action@v4.1.0
+        uses: codecov/codecov-action@v4.1.1
         with:
           token: ${{secrets.CODECOV_TOKEN}}
       - name: Archive code coverage results
