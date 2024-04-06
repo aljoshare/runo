@@ -2,6 +2,14 @@
 
 # rūnō - A Secret Generator for Kubernetes
 
+![GitHub Release](https://img.shields.io/github/v/release/aljoshare/runo?style=flat&logo=github&label=release&color=51aff7)
+![GitHub Release Date](https://img.shields.io/github/release-date/aljoshare/runo?display_date=published_at&style=flat&logo=github&label=release%20date&color=51aff7)
+
+![Static Badge](https://img.shields.io/badge/language-grey?logo=rust)
+![Static Badge](https://img.shields.io/badge/platform-linux-51aff7?logo=docker)
+![Static Badge](https://img.shields.io/badge/arch-amd64-51aff7?logo=docker)
+![Static Badge](https://img.shields.io/badge/arch-arm64-51aff7?logo=docker)
+
 While navigating the great ocean of Kubernetes and spinning up cluster after cluster and environment after environment, a little help is very welcome. rūnō is helping you with the in-cluster generation of secret strings. If no external storage of secrets is needed or desired, and you only want to have a random string for e.g. a database password, a user password or a replica set key, this controller is maybe helpful to you. 
 It supports:
 - Automatic field generation for Kubernetes secrets
