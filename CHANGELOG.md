@@ -1,5 +1,38 @@
 # Changelog
 
+### [v0.2.8](https://github.com/aljoshare/runo/compare/v0.2.7...v0.2.8) (2024-04-06)
+
+#### Fixes
+
+* **deps:** bump serde_yaml from 0.9.33 to 0.9.34+deprecated
+([6b34059](https://github.com/aljoshare/runo/commit/6b34059abfb181586fd28a2f8302e821115f6392))
+* **deps:** bump kube from 0.89.0 to 0.90.0
+([a8e1744](https://github.com/aljoshare/runo/commit/a8e1744304f6509e4f6d32a926e03e3491c41b8d))
+* **deps:** bump tokio from 1.36.0 to 1.37.0
+([39cbe00](https://github.com/aljoshare/runo/commit/39cbe00ea389bcd2fc667a263d1afd11d60711f0))
+* **deps:** bump clap from 4.5.3 to 4.5.4
+([9309ae5](https://github.com/aljoshare/runo/commit/9309ae51a07afd74a2c410157e0e3a1b89b61c78))
+* **deps:** bump h2 from 0.3.24 to 0.3.26
+([4558ade](https://github.com/aljoshare/runo/commit/4558ade99c7f9da446d4a1be09ac86da3aa742b0))
+* **deps:** bump chrono from 0.4.35 to 0.4.37
+([1610da0](https://github.com/aljoshare/runo/commit/1610da0bcaf1625177d9d88e545a11158a3e1e8f))
+* **deps:** bump kube from 0.88.1 to 0.89.0
+([ae26f24](https://github.com/aljoshare/runo/commit/ae26f248e23ce6b4190868cc419f0a688d8bc343))
+* **deps:** bump regex from 1.10.3 to 1.10.4
+([6970f19](https://github.com/aljoshare/runo/commit/6970f1988f874b8beb52352e22b75b06bef35218))
+* **deps:** bump serde_yaml from 0.9.32 to 0.9.33
+([1f50755](https://github.com/aljoshare/runo/commit/1f50755cae5819ac03a23bdfe3a43fbf83e716e1))
+* **deps:** bump clap from 4.5.2 to 4.5.3
+([cadbe3a](https://github.com/aljoshare/runo/commit/cadbe3a2894394ec3b927950e946cb133c6dc568))
+* **deps:** bump anyhow from 1.0.80 to 1.0.81
+([9d06259](https://github.com/aljoshare/runo/commit/9d06259db047b8d39b01be31c0711276f9ab1c39))
+* **deps:** bump thiserror from 1.0.57 to 1.0.58
+([e8fd7b4](https://github.com/aljoshare/runo/commit/e8fd7b422413722ede24ea8ee7061c88fe0cf73c))
+* **deps:** bump clap from 4.5.1 to 4.5.2
+([40b6162](https://github.com/aljoshare/runo/commit/40b6162584b171cc63dd049c295c6595bf43b958))
+* **deps:** bump chrono from 0.4.34 to 0.4.35
+([fb8d757](https://github.com/aljoshare/runo/commit/fb8d7578dde0411293acc5e39c6b79fc93a39393))
+
 ### [v0.2.7](https://github.com/aljoshare/runo/compare/v0.2.6...v0.2.7) (2024-03-06)
 
 #### Fixes
