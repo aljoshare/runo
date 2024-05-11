@@ -21,7 +21,7 @@ regex = "1.10.4"
 rand_regex = "0.17.0"
 cron = "0.12.1"
 chrono = "0.4.38"
-serde = "1.0.200"
+serde = "1.0.201"
 serde_yaml = "0.9.34"
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["json", "env-filter"] }
