@@ -1995,7 +1995,6 @@ dependencies = [
  "rand_regex",
  "regex",
  "serde",
- "serde_yaml",
  "sha3",
  "thiserror",
  "tokio",
