@@ -1,5 +1,36 @@
 # Changelog
 
+### [v0.2.10](https://github.com/aljoshare/runo/compare/v0.2.9...v0.2.10) (2024-06-22)
+
+#### Fixes
+
+* **deps:** bump kube to 0.92.1 and k8s-openapi to 0.22.0
+([35c12ca](https://github.com/aljoshare/runo/commit/35c12ca22ae8c7e62d65889574728dfa7e94e6d4))
+* **deps:** bump regex from 1.10.4 to 1.10.5
+([6ba8907](https://github.com/aljoshare/runo/commit/6ba89079bf9800dd50999f4ced0f027dcd378271))
+* **deps:** bump actix-web from 4.6.0 to 4.8.0
+([bf43e1a](https://github.com/aljoshare/runo/commit/bf43e1ae5fa2aa068f48ef58fcbd4584839c330b))
+* **deps:** bump clap from 4.5.6 to 4.5.7
+([c7ca904](https://github.com/aljoshare/runo/commit/c7ca9049e79d6ad122b5bf58cb2ce4b391832189))
+* **deps:** bump anyhow from 1.0.83 to 1.0.86
+([6fde64c](https://github.com/aljoshare/runo/commit/6fde64c41a0f6d92f0440ac6d2d59a7b14223a66))
+* **deps:** bump clap from 4.5.4 to 4.5.6
+([60cf0c5](https://github.com/aljoshare/runo/commit/60cf0c5b023a973075947b19d4f8a8654543c3bc))
+* **deps:** bump tokio from 1.37.0 to 1.38.0
+([dec41f4](https://github.com/aljoshare/runo/commit/dec41f4c6507c8c5431f7b7f7d7bc3b8b8e13b65))
+* **deps:** bump serde from 1.0.201 to 1.0.203
+([b55c9ab](https://github.com/aljoshare/runo/commit/b55c9ab4f81be2cad2d33f038721af4b67ca43a6))
+* **deps:** bump actix-web from 4.5.1 to 4.6.0
+([5b3a0c2](https://github.com/aljoshare/runo/commit/5b3a0c225c99cb0e8a1847c2ee730300718caab6))
+* **deps:** bump thiserror from 1.0.60 to 1.0.61
+([70c0059](https://github.com/aljoshare/runo/commit/70c0059d6a061ae6781ec9493afcb199c6d62340))
+* **deps:** bump serde from 1.0.200 to 1.0.201
+([d98880d](https://github.com/aljoshare/runo/commit/d98880de1b38d5b4b57e37ca0557d616edd7f7a2))
+* **deps:** bump thiserror from 1.0.59 to 1.0.60
+([0b30f90](https://github.com/aljoshare/runo/commit/0b30f9096cf7633793a9639af637a6f70268046e))
+* **deps:** bump anyhow from 1.0.82 to 1.0.83
+([d3dec48](https://github.com/aljoshare/runo/commit/d3dec48a7293be3206d4de2a616f9b84c5700ebd))
+
 ### [v0.2.9](https://github.com/aljoshare/runo/compare/v0.2.8...v0.2.9) (2024-05-05)
 
 #### Fixes
