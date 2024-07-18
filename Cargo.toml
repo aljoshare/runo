@@ -15,7 +15,7 @@ kube = { version = "0.92.1", features = ["runtime", "derive"] }
 k8s-openapi = { version = "0.22.0", features = ["v1_25"] }
 futures = "0.3.30"
 futures-util = "0.3.28"
-thiserror = "1.0.62"
+thiserror = "1.0.63"
 rand = "0.8.5"
 regex = "1.10.5"
 rand_regex = "0.17.0"
