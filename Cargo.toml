@@ -30,7 +30,7 @@ anyhow = "1.0.86"
 clap = { version = "4.5.10", features = ["derive"] }
 
 [dev-dependencies]
-assert_cmd = "2.0.14"
+assert_cmd = "2.0.15"
 criterion = { version = "0.5.1", features = ["html_reports"] }
 
 [[bench]]
