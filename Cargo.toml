@@ -28,6 +28,7 @@ sha3 = "0.10.8"
 actix-web = "4.8.0"
 anyhow = "1.0.86"
 clap = { version = "4.5.10", features = ["derive"] }
+time = "0.3.36"
 
 [dev-dependencies]
 assert_cmd = "2.0.14"
