@@ -33,6 +33,7 @@ time = "0.3.36"
 [dev-dependencies]
 assert_cmd = "2.0.14"
 criterion = { version = "0.5.1", features = ["html_reports"] }
+rstest = "0.22.0"
 
 [[bench]]
 name = "main"
