@@ -21,10 +21,17 @@ pub fn set_logger() -> Result<LevelFilter, CantAttachLogger> {
 
 #[cfg(test)]
 mod tests {
-    use crate::logging::set_logger;
+    use std::env;
 
-    #[test]
-    fn is_logger_set() {
-        assert!(set_logger());
+    use crate::logging::set_logger;
+    use rstest::*;
+
+    #[rstest]
+    #[case("info")]
+    fn set_valid_logger(#[case] log_level: String) {
+        env::set_var("RUST_LOG", &log_level);
+        let result = set_logger();
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().to_string(), log_level)
     }
 }
