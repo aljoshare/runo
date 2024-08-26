@@ -32,8 +32,8 @@ struct MainArgs {
 async fn main() -> anyhow::Result<()> {
     let args = MainArgs::parse();
     match logging::set_logger() {
-        true => info!("Logging initialized.."),
-        false => panic!("Logging not initialized properly!. Exiting..."),
+        Ok(level) => info!("Logging with level {} initialized..", level),
+        Err(_) => panic!("Logging not initialized properly!. Exiting..."),
     }
     let k8s = K8s::build(args.dry_run);
     let config = RunoConfig::build(k8s, args.requeue_duration);

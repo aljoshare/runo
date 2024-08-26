@@ -26,3 +26,15 @@ impl fmt::Display for CantCreateStringFromRegex {
         write!(f, "Can't create random string from specified regex")
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct CantAttachLogger;
+
+impl fmt::Display for CantAttachLogger {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Can't attach logger. No additional logs will be written!"
+        )
+    }
+}
