@@ -38,7 +38,7 @@ mod tests {
     }
 
     #[rstest]
-    fn panic_if_level_not_set() {
+    fn err_if_level_not_set() {
         assert!(get_subscriber(false).is_err());
     }
 }
