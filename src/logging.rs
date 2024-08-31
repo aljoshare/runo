@@ -39,6 +39,7 @@ mod tests {
 
     #[rstest]
     fn err_if_level_not_set() {
+        env::remove_var("RUST_LOG");
         assert!(get_subscriber(false).is_err());
     }
 }
