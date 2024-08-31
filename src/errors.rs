@@ -26,3 +26,12 @@ impl fmt::Display for CantCreateStringFromRegex {
         write!(f, "Can't create random string from specified regex")
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct LogLevelMissing;
+
+impl fmt::Display for LogLevelMissing {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "RUST_LOG is not set properly!")
+    }
+}

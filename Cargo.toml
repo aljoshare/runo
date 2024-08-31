@@ -34,6 +34,7 @@ time = "0.3.36"
 assert_cmd = "2.0.14"
 criterion = { version = "0.5.1", features = ["html_reports"] }
 rstest = "0.22.0"
+temp-env = "0.3.6"
 
 [[bench]]
 name = "main"
