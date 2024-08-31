@@ -33,13 +33,16 @@ mod tests {
     #[case("DEBUG")]
     #[case("TRACE")]
     fn get_valid_subscriber(#[case] log_level: String) {
-        env::set_var("RUST_LOG", &log_level);
-        assert!(get_subscriber(false).is_ok());
+        temp_env::with_var("RUST_LOG", Some(&log_level), || {
+            assert!(get_subscriber(false).is_ok());
+            env::remove_var("RUST_LOG");
+        });
     }
 
     #[rstest]
     fn err_if_level_not_set() {
-        env::remove_var("RUST_LOG");
-        assert!(get_subscriber(false).is_err());
+        temp_env::with_var("RUST_LOG", None::<&str>, || {
+            assert!(get_subscriber(false).is_err());
+        });
     }
 }
