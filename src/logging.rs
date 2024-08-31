@@ -1,37 +1,44 @@
-use tracing::level_filters::LevelFilter;
-use tracing_subscriber::layer::SubscriberExt;
-use tracing_subscriber::{EnvFilter, Registry};
+use tracing_subscriber::fmt::format::{DefaultFields, Format};
+use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
-use crate::errors::CantAttachLogger;
+use crate::errors::LogLevelMissing;
 
-pub fn set_logger() -> Result<LevelFilter, CantAttachLogger> {
-    let logger = tracing_subscriber::fmt::layer().json();
-    match EnvFilter::try_from_default_env().or_else(|_| EnvFilter::try_new("info")) {
-        Ok(env_filter) => {
-            let level = env_filter.max_level_hint().unwrap();
-            let collector = Registry::default().with(logger).with(env_filter);
-            if tracing::subscriber::set_global_default(collector).is_err() {
-                return Err(CantAttachLogger);
+pub fn get_subscriber(
+    or_default: bool,
+) -> Result<FmtSubscriber<DefaultFields, Format, EnvFilter>, LogLevelMissing> {
+    match EnvFilter::try_from_default_env() {
+        Ok(ef) => Ok(tracing_subscriber::fmt().with_env_filter(ef).finish()),
+        Err(_) => {
+            if or_default {
+                Ok(tracing_subscriber::fmt()
+                    .with_env_filter(EnvFilter::new("INFO"))
+                    .finish())
+            } else {
+                Err(LogLevelMissing)
             }
-            Ok(level)
         }
-        Err(_) => Err(CantAttachLogger),
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::logging::get_subscriber;
+    use rstest::*;
     use std::env;
 
-    use crate::logging::set_logger;
-    use rstest::*;
+    #[rstest]
+    #[case("ERROR")]
+    #[case("WARN")]
+    #[case("INFO")]
+    #[case("DEBUG")]
+    #[case("TRACE")]
+    fn get_valid_subscriber(#[case] log_level: String) {
+        env::set_var("RUST_LOG", &log_level);
+        assert!(get_subscriber(false).is_ok());
+    }
 
     #[rstest]
-    #[case("info")]
-    fn set_valid_logger(#[case] log_level: String) {
-        env::set_var("RUST_LOG", &log_level);
-        let result = set_logger();
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap().to_string(), log_level)
+    fn panic_if_level_not_set() {
+        assert!(get_subscriber(false).is_err());
     }
 }

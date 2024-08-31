@@ -28,13 +28,10 @@ impl fmt::Display for CantCreateStringFromRegex {
 }
 
 #[derive(Debug, Clone)]
-pub struct CantAttachLogger;
+pub struct LogLevelMissing;
 
-impl fmt::Display for CantAttachLogger {
+impl fmt::Display for LogLevelMissing {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Can't attach logger. No additional logs will be written!"
-        )
+        write!(f, "RUST_LOG is not set properly!")
     }
 }

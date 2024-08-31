@@ -13,7 +13,9 @@ use crate::k8s::K8s;
 use anyhow::anyhow;
 use clap::Parser;
 use config::RunoConfig;
+use errors::LogLevelMissing;
 use tracing::info;
+use tracing_subscriber::util::SubscriberInitExt;
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -31,10 +33,14 @@ struct MainArgs {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let args = MainArgs::parse();
-    match logging::set_logger() {
-        Ok(level) => info!("Logging with level {} initialized..", level),
-        Err(_) => panic!("Logging not initialized properly!. Exiting..."),
-    }
+    let subscriber = match logging::get_subscriber(true) {
+        Ok(s) => {
+            info!("Logging initialized..");
+            s
+        }
+        Err(LogLevelMissing) => panic!("RUST_LOG is not set properly!"),
+    };
+    subscriber.init();
     let k8s = K8s::build(args.dry_run);
     let config = RunoConfig::build(k8s, args.requeue_duration);
     match args.mode.as_str() {
