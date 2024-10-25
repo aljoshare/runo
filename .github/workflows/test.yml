@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: [v1.25.16, v1.26.15, v1.27.13, v1.28.9, v1.29.4, v1.30.0]
+        version: [v1.26.15, v1.27.16, v1.28.13, v1.29.8, v1.30.4, v1.31.1]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
