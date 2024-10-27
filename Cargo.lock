@@ -2209,6 +2209,7 @@ dependencies = [
  "regex",
  "rstest",
  "serde",
+ "sha2",
  "sha3",
  "temp-env",
  "thiserror",
