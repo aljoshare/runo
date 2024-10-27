@@ -83,13 +83,14 @@ fn update_annotations(obj: &Arc<Secret>) -> BTreeMap<String, String> {
                 obj.name_any(),
                 id
             );
-            let generated_at_v1 = format!("v1.secret.runo.rocks/generated-at-{}", id);
+            let generated_at_v1 =
+                format!("{}-{}", annotations::V1Annotation::GeneratedAt.key(), id);
             let now: DateTime<Utc> = SystemTime::now().into();
             secret_annotations.insert(generated_at_v1, now.timestamp().to_string());
         }
         if needs_renewal(obj, id.as_str()) {
             secret_annotations.insert(
-                format!("v1.secret.runo.rocks/renewal-{}", id),
+                format!("{}-{}", annotations::V1Annotation::Renewal.key(), id),
                 "false".to_string(),
             );
         }

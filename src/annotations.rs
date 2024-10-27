@@ -3,7 +3,7 @@ use kube::ResourceExt;
 use std::sync::Arc;
 use tracing::{debug, error};
 
-enum V1Annotation {
+pub enum V1Annotation {
     Charset,
     Generate,
     GeneratedAt,
@@ -14,7 +14,7 @@ enum V1Annotation {
 }
 
 impl V1Annotation {
-    fn key(&self) -> String {
+    pub fn key(&self) -> String {
         match *self {
             V1Annotation::Charset => "v1.secret.runo.rocks/charset".to_string(),
             V1Annotation::Generate => "v1.secret.runo.rocks/generate".to_string(),
@@ -25,7 +25,7 @@ impl V1Annotation {
             V1Annotation::RenewalCron => "v1.secret.runo.rocks/renewal-cron".to_string(),
         }
     }
-    fn value(&self, id: &str) -> String {
+    pub fn value(&self, id: &str) -> String {
         match *self {
             V1Annotation::Charset => format!("{}-{}", V1Annotation::Charset.key(), id),
             V1Annotation::Generate => format!("{}-{}", V1Annotation::Generate.key(), id),
