@@ -1,9 +1,10 @@
 use k8s_openapi::api::core::v1::Secret;
 use kube::ResourceExt;
+use sha2::{Digest, Sha256};
 use std::sync::Arc;
 use tracing::{debug, error};
 
-enum V1Annotation {
+pub enum V1Annotation {
     Charset,
     Generate,
     GeneratedAt,
@@ -11,10 +12,11 @@ enum V1Annotation {
     Pattern,
     Renewal,
     RenewalCron,
+    ConfigChecksum,
 }
 
 impl V1Annotation {
-    fn key(&self) -> String {
+    pub fn key(&self) -> String {
         match *self {
             V1Annotation::Charset => "v1.secret.runo.rocks/charset".to_string(),
             V1Annotation::Generate => "v1.secret.runo.rocks/generate".to_string(),
@@ -23,9 +25,10 @@ impl V1Annotation {
             V1Annotation::Pattern => "v1.secret.runo.rocks/pattern".to_string(),
             V1Annotation::Renewal => "v1.secret.runo.rocks/renewal".to_string(),
             V1Annotation::RenewalCron => "v1.secret.runo.rocks/renewal-cron".to_string(),
+            V1Annotation::ConfigChecksum => "v1.secret.runo.rocks/config-checksum".to_string(),
         }
     }
-    fn value(&self, id: &str) -> String {
+    pub fn value(&self, id: &str) -> String {
         match *self {
             V1Annotation::Charset => format!("{}-{}", V1Annotation::Charset.key(), id),
             V1Annotation::Generate => format!("{}-{}", V1Annotation::Generate.key(), id),
@@ -34,6 +37,9 @@ impl V1Annotation {
             V1Annotation::Pattern => format!("{}-{}", V1Annotation::Pattern.key(), id),
             V1Annotation::Renewal => format!("{}-{}", V1Annotation::Renewal.key(), id),
             V1Annotation::RenewalCron => format!("{}-{}", V1Annotation::RenewalCron.key(), id),
+            V1Annotation::ConfigChecksum => {
+                format!("{}-{}", V1Annotation::ConfigChecksum.key(), id)
+            }
         }
     }
     fn default(&self) -> Option<String> {
@@ -47,6 +53,7 @@ impl V1Annotation {
             V1Annotation::Pattern => Some("[a-zA-Z0-9\\-\\_\\(\\)\\%\\$\\@]".to_string()),
             V1Annotation::Renewal => None,
             V1Annotation::RenewalCron => None,
+            V1Annotation::ConfigChecksum => None,
         }
     }
 }
@@ -91,6 +98,22 @@ pub fn needs_renewal(obj: &Arc<Secret>, id: &str) -> bool {
             false
         }
     }
+}
+
+pub fn create_checksum(obj: &Arc<Secret>, id: &str) -> String {
+    let mut hasher = Sha256::new();
+    for annotation in get_annotations_for_id(obj, id) {
+        hasher.update(annotation);
+    }
+    let hash = hasher.finalize();
+    format!("{:x}", hash)
+}
+
+fn get_annotations_for_id<'a>(obj: &'a Arc<Secret>, id: &'a str) -> Vec<&'a String> {
+    obj.annotations()
+        .keys()
+        .filter(|p| p.ends_with(format!("-{}", id).as_str()))
+        .collect()
 }
 
 pub fn has_cron(obj: &Arc<Secret>, id: &str) -> bool {
@@ -179,6 +202,11 @@ pub fn id_iter(obj: &Arc<Secret>) -> Vec<String> {
         .map(|p| p.replace(format!("{}-", V1Annotation::Generate.key()).as_str(), ""))
         .collect();
     ids
+}
+
+#[allow(dead_code)]
+pub fn checksum(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
+    _annotation_result(obj, V1Annotation::ConfigChecksum, id)
 }
 
 #[cfg(test)]
@@ -364,6 +392,16 @@ mod tests {
         assert_eq!(
             crate::annotations::key(&Arc::new(secret.clone()), "0").get_value(),
             value
+        );
+    }
+
+    #[rstest]
+    #[case("v1.secret.runo.rocks/config-checksum-0", "checksum")]
+    fn v1_config_checksum(#[case] key: String, #[case] value: String) {
+        let secret = build_secret_with_annotations(vec![(key, value.to_string())]);
+        assert_eq!(
+            crate::annotations::checksum(&Arc::new(secret), "0").get_value(),
+            value.to_string()
         );
     }
 }

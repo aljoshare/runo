@@ -1,4 +1,6 @@
-use crate::annotations::{already_generated, charset, id_iter, length, needs_renewal, pattern};
+use crate::annotations::{
+    already_generated, charset, create_checksum, id_iter, length, needs_renewal, pattern,
+};
 use chrono::{DateTime, Utc};
 use k8s_openapi::api::core::v1::Secret;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
@@ -83,16 +85,22 @@ fn update_annotations(obj: &Arc<Secret>) -> BTreeMap<String, String> {
                 obj.name_any(),
                 id
             );
-            let generated_at_v1 = format!("v1.secret.runo.rocks/generated-at-{}", id);
+            let generated_at_v1 =
+                format!("{}-{}", annotations::V1Annotation::GeneratedAt.key(), id);
             let now: DateTime<Utc> = SystemTime::now().into();
             secret_annotations.insert(generated_at_v1, now.timestamp().to_string());
         }
         if needs_renewal(obj, id.as_str()) {
             secret_annotations.insert(
-                format!("v1.secret.runo.rocks/renewal-{}", id),
+                format!("{}-{}", annotations::V1Annotation::Renewal.key(), id),
                 "false".to_string(),
             );
         }
+        let checksum = create_checksum(obj, id.as_str());
+        debug!("Adding checksum {:?} for config with ID {:?}", checksum, id);
+        let checksum_v1: String =
+            format!("{}-{}", annotations::V1Annotation::ConfigChecksum.key(), id);
+        secret_annotations.insert(checksum_v1, checksum);
     }
     secret_annotations
 }
@@ -174,6 +182,7 @@ pub async fn update(obj: &Arc<Secret>, k8s: &K8s) {
 
 #[cfg(test)]
 mod tests {
+    use crate::annotations::create_checksum;
     use crate::secrets::{generate_random_string, update_annotations, update_data};
     use chrono::{DateTime, Utc};
     use k8s_openapi::api::core::v1::Secret;
@@ -323,5 +332,18 @@ mod tests {
         let data = update_data(&Arc::from(secret));
         assert!(data.contains_key("username"));
         assert!(data.get("username").is_some())
+    }
+
+    #[test]
+    fn test_update_annotations_creates_config_checksum() {
+        let key_1 = String::from("v1.secret.runo.rocks/generate-0");
+        let value_1 = String::from("username");
+        let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
+        let annotations = update_annotations(&Arc::from(secret.clone()));
+        assert!(annotations.contains_key("v1.secret.runo.rocks/config-checksum-0"));
+        let checksum = annotations
+            .get("v1.secret.runo.rocks/config-checksum-0")
+            .unwrap();
+        assert_eq!(*checksum, create_checksum(&Arc::from(secret), "0"));
     }
 }
