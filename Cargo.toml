@@ -2,7 +2,7 @@
 name = "runo"
 description = "rūnō - A Secrets Generator for Kubernetes written in Rust"
 authors = ["Aljoscha Pörtner <aljoscha.poertner@proton.me>"]
-version = "0.2.12"
+version = "0.2.13"
 edition = "2021"
 license = "MIT"
 publish = false
