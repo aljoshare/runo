@@ -26,7 +26,7 @@ tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["json", "env-filter"] }
 sha3 = "0.10.8"
 actix-web = "4.8.0"
-anyhow = "1.0.94"
+anyhow = "1.0.95"
 clap = { version = "4.5.26", features = ["derive"] }
 time = "0.3.37"
 sha2 = "0.10.8"
