@@ -281,6 +281,7 @@ mod tests {
         let annotations = update_annotations(&Arc::from(secret));
         let end: DateTime<Utc> = SystemTime::now().into();
         assert!(annotations.contains_key("v1.secret.runo.rocks/generated-at-0"));
+        assert!(annotations.contains_key("v1.secret.runo.rocks/config-checksum-0"));
         let timestamp: i64 = annotations
             .get("v1.secret.runo.rocks/generated-at-0")
             .unwrap()
