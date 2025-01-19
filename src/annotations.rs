@@ -102,18 +102,21 @@ pub fn needs_renewal(obj: &Arc<Secret>, id: &str) -> bool {
 
 pub fn create_checksum(obj: &Arc<Secret>, id: &str) -> String {
     let mut hasher = Sha256::new();
-    for annotation in get_annotations_for_id(obj, id) {
+    for annotation in get_annotation_values_for_id(obj, id) {
+        println!("{}", annotation);
         hasher.update(annotation);
     }
     let hash = hasher.finalize();
     format!("{:x}", hash)
 }
 
-fn get_annotations_for_id<'a>(obj: &'a Arc<Secret>, id: &'a str) -> Vec<&'a String> {
-    obj.annotations()
-        .keys()
-        .filter(|p| p.ends_with(format!("-{}", id).as_str()))
-        .collect()
+fn get_annotation_values_for_id<'a>(obj: &'a Arc<Secret>, id: &'a str) -> Vec<&'a String> {
+    let annotations_for_id: Vec<(&String, &String)> = obj
+        .annotations()
+        .iter()
+        .filter(|p| p.0.ends_with(format!("-{}", id).as_str()))
+        .collect();
+    annotations_for_id.iter().map(|p| p.1).collect()
 }
 
 pub fn has_cron(obj: &Arc<Secret>, id: &str) -> bool {
@@ -218,6 +221,7 @@ mod tests {
 
     use std::collections::BTreeMap;
 
+    use crate::annotations::create_checksum;
     use std::sync::Arc;
     use std::time::SystemTime;
 
@@ -403,5 +407,22 @@ mod tests {
             crate::annotations::checksum(&Arc::new(secret), "0").get_value(),
             value.to_string()
         );
+    }
+
+    #[rstest]
+    #[case(
+        "v1.secret.runo.rocks/generate-0",
+        "username",
+        "16f78a7d6317f102bbd95fc9a4f3ff2e3249287690b8bdad6b7810f82b34ace3"
+    )]
+    #[case(
+        "v1.secret.runo.rocks/generate-0",
+        "password",
+        "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"
+    )]
+    fn v1_config_checksum_create(#[case] key: String, #[case] value: String, #[case] hash: String) {
+        let secret = build_secret_with_annotations(vec![(key, value.to_string())]);
+        let checksum = create_checksum(&Arc::new(secret.clone()), "0");
+        assert_eq!(checksum, hash);
     }
 }

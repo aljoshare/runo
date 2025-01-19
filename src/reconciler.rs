@@ -65,7 +65,7 @@ mod tests {
     use kube::api::{DeleteParams, PostParams};
     use kube::config::KubeConfigOptions;
 
-    use kube::{Api, Client, Config};
+    use kube::{Api, Client, Config, ResourceExt};
     use regex::Regex;
     use std::collections::BTreeMap;
 
@@ -184,6 +184,59 @@ mod tests {
             .unwrap()
             .get("password")
             .is_some());
+        secrets
+            .delete(secret_name, &DeleteParams::default())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn integration_reconcile_should_generate_checksum() {
+        let secret_name = "runo-generate-test-generate-checksum";
+        let config = Config::from_kubeconfig(&get_kubeconfig_options())
+            .await
+            .unwrap();
+        let client = Client::try_from(config).unwrap();
+
+        let k8s = K8s::build(false);
+        let runo_config = Arc::new(RunoConfig::build(k8s, 300));
+
+        let key_0 = String::from("v1.secret.runo.rocks/generate-0");
+        let value_0 = String::from("username");
+
+        let key_1 = String::from("v1.secret.runo.rocks/generate-1");
+        let value_1 = String::from("password");
+
+        let post_params = build_post_params();
+        let secret = build_managed_secret_with_annotations(
+            secret_name.to_string(),
+            vec![(key_0, value_0), (key_1, value_1)],
+        );
+        let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        secrets.create(&post_params, &secret).await.unwrap();
+
+        // Data should be empty
+        assert!(secrets.get(secret_name).await.unwrap().data.is_none());
+
+        // reconcile it
+        reconcile(Arc::new(secret), runo_config).await.unwrap();
+
+        // Checksum for field username should be generated
+        assert!(secrets
+            .get(secret_name)
+            .await
+            .unwrap()
+            .annotations()
+            .contains_key("v1.secret.runo.rocks/config-checksum-0"));
+
+        // Checksum for field password should be generated
+        assert!(secrets
+            .get(secret_name)
+            .await
+            .unwrap()
+            .annotations()
+            .contains_key("v1.secret.runo.rocks/config-checksum-1"));
+
         secrets
             .delete(secret_name, &DeleteParams::default())
             .await
