@@ -221,6 +221,7 @@ mod tests {
 
     use std::collections::BTreeMap;
 
+    use crate::annotations::create_checksum;
     use std::sync::Arc;
     use std::time::SystemTime;
 
@@ -406,5 +407,22 @@ mod tests {
             crate::annotations::checksum(&Arc::new(secret), "0").get_value(),
             value.to_string()
         );
+    }
+
+    #[rstest]
+    #[case(
+        "v1.secret.runo.rocks/generate-0",
+        "username",
+        "16f78a7d6317f102bbd95fc9a4f3ff2e3249287690b8bdad6b7810f82b34ace3"
+    )]
+    #[case(
+        "v1.secret.runo.rocks/generate-0",
+        "password",
+        "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"
+    )]
+    fn v1_config_checksum_create(#[case] key: String, #[case] value: String, #[case] hash: String) {
+        let secret = build_secret_with_annotations(vec![(key, value.to_string())]);
+        let checksum = create_checksum(&Arc::new(secret.clone()), "0");
+        assert_eq!(checksum, hash);
     }
 }
