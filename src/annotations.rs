@@ -102,18 +102,21 @@ pub fn needs_renewal(obj: &Arc<Secret>, id: &str) -> bool {
 
 pub fn create_checksum(obj: &Arc<Secret>, id: &str) -> String {
     let mut hasher = Sha256::new();
-    for annotation in get_annotations_for_id(obj, id) {
+    for annotation in get_annotation_values_for_id(obj, id) {
+        println!("{}", annotation);
         hasher.update(annotation);
     }
     let hash = hasher.finalize();
     format!("{:x}", hash)
 }
 
-fn get_annotations_for_id<'a>(obj: &'a Arc<Secret>, id: &'a str) -> Vec<&'a String> {
-    obj.annotations()
-        .keys()
-        .filter(|p| p.ends_with(format!("-{}", id).as_str()))
-        .collect()
+fn get_annotation_values_for_id<'a>(obj: &'a Arc<Secret>, id: &'a str) -> Vec<&'a String> {
+    let annotations_for_id: Vec<(&String, &String)> = obj
+        .annotations()
+        .iter()
+        .filter(|p| p.0.ends_with(format!("-{}", id).as_str()))
+        .collect();
+    annotations_for_id.iter().map(|p| p.1).collect()
 }
 
 pub fn has_cron(obj: &Arc<Secret>, id: &str) -> bool {
