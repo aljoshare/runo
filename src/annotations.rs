@@ -146,6 +146,7 @@ fn get_annotation_values_for_id<'a>(obj: &'a Arc<Secret>, id: &'a str) -> Vec<&'
     let annotations_for_id: Vec<(&String, &String)> = obj
         .annotations()
         .iter()
+        .filter(|p| !p.0.starts_with(V1Annotation::ConfigChecksum.key().as_str()))
         .filter(|p| p.0.ends_with(format!("-{}", id).as_str()))
         .collect();
     annotations_for_id.iter().map(|p| p.1).collect()
