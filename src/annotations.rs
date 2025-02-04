@@ -13,6 +13,7 @@ pub enum V1Annotation {
     Renewal,
     RenewalCron,
     ConfigChecksum,
+    ForceOverwrite,
 }
 
 impl V1Annotation {
@@ -26,6 +27,7 @@ impl V1Annotation {
             V1Annotation::Renewal => "v1.secret.runo.rocks/renewal".to_string(),
             V1Annotation::RenewalCron => "v1.secret.runo.rocks/renewal-cron".to_string(),
             V1Annotation::ConfigChecksum => "v1.secret.runo.rocks/config-checksum".to_string(),
+            V1Annotation::ForceOverwrite => "v1.secret.runo.rocks/force-overwrite".to_string(),
         }
     }
     pub fn value(&self, id: &str) -> String {
@@ -39,6 +41,9 @@ impl V1Annotation {
             V1Annotation::RenewalCron => format!("{}-{}", V1Annotation::RenewalCron.key(), id),
             V1Annotation::ConfigChecksum => {
                 format!("{}-{}", V1Annotation::ConfigChecksum.key(), id)
+            }
+            V1Annotation::ForceOverwrite => {
+                format!("{}-{}", V1Annotation::ForceOverwrite.key(), id)
             }
         }
     }
@@ -54,6 +59,7 @@ impl V1Annotation {
             V1Annotation::Renewal => None,
             V1Annotation::RenewalCron => None,
             V1Annotation::ConfigChecksum => None,
+            V1Annotation::ForceOverwrite => Some("false".to_string()),
         }
     }
 }
@@ -62,6 +68,7 @@ impl V1Annotation {
 pub struct AnnotationResult<T> {
     value: T,
     default: bool,
+    exists: bool,
 }
 
 impl<T> AnnotationResult<T> {
@@ -69,15 +76,40 @@ impl<T> AnnotationResult<T> {
         self.default
     }
 
+    pub fn exists(&self) -> bool {
+        self.exists
+    }
+
     pub fn get_value(self) -> T {
         self.value
     }
 }
 
-pub fn already_generated(obj: &Arc<Secret>, id: &str) -> bool {
-    let generated_at_v1 = V1Annotation::GeneratedAt.value(id);
-    println!("{:?}", obj.annotations().keys());
-    obj.annotations().contains_key(&generated_at_v1)
+fn already_set(obj: &Arc<Secret>, id: &str) -> bool {
+    let generate = generate(obj, id);
+    match obj.data.as_ref() {
+        Some(d) => d.get(&generate.get_value()).is_some(),
+        None => false,
+    }
+}
+
+fn should_force_overwrite(obj: &Arc<Secret>, id: &str) -> bool {
+    force_overwrite(obj, id).get_value() == "true"
+}
+
+pub fn needs_generation(obj: &Arc<Secret>, id: &str) -> bool {
+    if !generate(obj, id).exists() {
+        return false;
+    }
+    if generated_at(obj, id).exists() {
+        return false;
+    }
+    if already_set(obj, id) {
+        if !should_force_overwrite(obj, id) {
+            return false;
+        }
+    };
+    true
 }
 
 pub fn needs_renewal(obj: &Arc<Secret>, id: &str) -> bool {
@@ -133,6 +165,7 @@ pub fn length(obj: &Arc<Secret>, id: &str) -> AnnotationResult<usize> {
                 true => AnnotationResult {
                     value: length,
                     default: false,
+                    exists: true,
                 },
                 false => {
                     error!("Invalid length! Please set a length > 0 and <= 100. Proceeding with default length.");
@@ -140,6 +173,7 @@ pub fn length(obj: &Arc<Secret>, id: &str) -> AnnotationResult<usize> {
                         Some(default) => AnnotationResult {
                             value: default.parse::<i32>().unwrap() as usize,
                             default: true,
+                            exists: false,
                         },
                         None => panic!("No default set for length! Panic!"),
                     }
@@ -150,6 +184,7 @@ pub fn length(obj: &Arc<Secret>, id: &str) -> AnnotationResult<usize> {
             Some(default) => AnnotationResult {
                 value: default.parse::<i32>().unwrap() as usize,
                 default: true,
+                exists: false,
             },
             None => panic!("No default set for length! Panic!"),
         },
@@ -165,10 +200,12 @@ fn _annotation_result(
         Some(value) => AnnotationResult {
             value: value.to_string(),
             default: false,
+            exists: true,
         },
         None => AnnotationResult {
             value: annotation.default().unwrap_or("".to_string()),
             default: true,
+            exists: false,
         },
     };
 }
@@ -190,8 +227,12 @@ pub fn renewal_cron(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
     _annotation_result(obj, V1Annotation::RenewalCron, id)
 }
 
-pub fn key(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
+pub fn generate(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
     _annotation_result(obj, V1Annotation::Generate, id)
+}
+
+pub fn force_overwrite(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
+    _annotation_result(obj, V1Annotation::ForceOverwrite, id)
 }
 
 pub fn id_iter(obj: &Arc<Secret>) -> Vec<String> {
@@ -394,7 +435,7 @@ mod tests {
     fn v1_key(#[case] key: String, #[case] value: String) {
         let secret = build_secret_with_annotations(vec![(key, value.clone())]);
         assert_eq!(
-            crate::annotations::key(&Arc::new(secret.clone()), "0").get_value(),
+            crate::annotations::generate(&Arc::new(secret.clone()), "0").get_value(),
             value
         );
     }
