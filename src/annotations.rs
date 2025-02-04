@@ -258,6 +258,8 @@ mod tests {
     use chrono::{DateTime, Utc};
     use k8s_openapi::api::core::v1::Secret;
     use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
+    use k8s_openapi::ByteString;
+    use kube::runtime::predicates::annotations;
     use rstest::*;
 
     use std::collections::BTreeMap;
@@ -465,5 +467,85 @@ mod tests {
         let secret = build_secret_with_annotations(vec![(key, value.to_string())]);
         let checksum = create_checksum(&Arc::new(secret.clone()), "0");
         assert_eq!(checksum, hash);
+    }
+
+    #[rstest]
+    #[case("v1.secret.runo.rocks/force-overwrite-0", "true")]
+    #[case("v1.secret.runo.rocks/force-overwrite-0", "false")]
+    fn v1_force_overwrite(#[case] key: String, #[case] value: bool) {
+        let secret = build_secret_with_annotations(vec![(key, value.to_string())]);
+        assert_eq!(
+            crate::annotations::force_overwrite(&Arc::new(secret), "0").get_value(),
+            value.to_string()
+        );
+    }
+
+    #[rstest]
+    fn v1_force_overwrite_returns_default() {
+        let secret = build_secret_with_annotations(vec![]);
+        assert_eq!(
+            crate::annotations::force_overwrite(&Arc::new(secret.clone()), "0").is_default(),
+            true
+        );
+        assert_eq!(
+            crate::annotations::force_overwrite(&Arc::new(secret), "0").get_value(),
+            "false"
+        );
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string())])]
+    fn needs_generation(#[case] annotations: Vec<(String, String)>) {
+        let secret = build_secret_with_annotations(annotations);
+        assert_eq!(
+            crate::annotations::needs_generation(&Arc::new(secret), "0"),
+            true
+        );
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+    ("v1.secret.runo.rocks/generated-at-0".to_string(), format!("{:?}",SystemTime::now()))])]
+    fn needs_no_generation_already_generated(#[case] annotations: Vec<(String, String)>) {
+        let secret = build_secret_with_annotations(annotations);
+        assert_eq!(
+            crate::annotations::needs_generation(&Arc::new(secret), "0"),
+            false
+        );
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string())])]
+    fn needs_no_generation_already_set(#[case] annotations: Vec<(String, String)>) {
+        let mut secret = build_secret_with_annotations(annotations);
+        let mut predefined_data: BTreeMap<String, ByteString> = BTreeMap::new();
+        predefined_data.insert(
+            "username".to_string(),
+            ByteString("already-set".to_string().into_bytes()),
+        );
+        secret.data = Some(predefined_data);
+        assert_eq!(
+            crate::annotations::needs_generation(&Arc::new(secret), "0"),
+            false
+        );
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+    ("v1.secret.runo.rocks/force-overwrite-0".to_string(), "true".to_string())])]
+    fn needs_generation_already_set_but_force_overwrite(
+        #[case] annotations: Vec<(String, String)>,
+    ) {
+        let mut secret = build_secret_with_annotations(annotations);
+        let mut predefined_data: BTreeMap<String, ByteString> = BTreeMap::new();
+        predefined_data.insert(
+            "username".to_string(),
+            ByteString("already-set".to_string().into_bytes()),
+        );
+        secret.data = Some(predefined_data);
+        assert_eq!(
+            crate::annotations::needs_generation(&Arc::new(secret), "0"),
+            true
+        );
     }
 }
