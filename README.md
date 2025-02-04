@@ -125,6 +125,23 @@ Sometimes its helpful or even necessary to rotate secrets after some time. rūn�
 
 ***Please note*** that not all use cases or applications support secret rotation. Please check carefully before using this feature. There is no history of field values and nobody wants to be locked-out of a production database because of that.
 
+v1.secret.runo.rocks/force-overwrite
+----
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: example-secret
+  labels:
+    v1.secret.runo.rocks/managed: "true"
+  annotations:
+    v1.secret.runo.rocks/generate-${ID}: ${FIELD_NAME} # Example: password
+    v1.secret.runo.rocks/force-overwrite-${ID}: true # Example: password
+type: Opaque
+data:
+```
+Annotation to enforce that runo overwrites a field which is already set, e.g. if you have an existing secret which should be managed afterwards by runo and you want to regenerate a single field. By default, runo ignores fields which are already set.
+
 ## Deployment
 
 Please deploy rūnō via the [available Helm chart](https://github.com/AljoschaP/runo-helm-chart).
