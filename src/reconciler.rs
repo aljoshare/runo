@@ -62,6 +62,7 @@ mod tests {
     use k8s_openapi::api::core::v1::Secret;
     use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
 
+    use k8s_openapi::ByteString;
     use kube::api::{DeleteParams, PostParams};
     use kube::config::KubeConfigOptions;
 
@@ -175,6 +176,143 @@ mod tests {
             .unwrap()
             .get("username")
             .is_some());
+        // Value for field password should be generated
+        assert!(secrets
+            .get(secret_name)
+            .await
+            .unwrap()
+            .data
+            .unwrap()
+            .get("password")
+            .is_some());
+        secrets
+            .delete(secret_name, &DeleteParams::default())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn integration_reconcile_should_not_generate_secret_if_field_already_exists() {
+        let secret_name = "runo-generate-test-generate-field-already-exists";
+        let config = Config::from_kubeconfig(&get_kubeconfig_options())
+            .await
+            .unwrap();
+        let client = Client::try_from(config).unwrap();
+
+        let k8s = K8s::build(false);
+        let runo_config = Arc::new(RunoConfig::build(k8s, 300));
+
+        let key_0 = String::from("v1.secret.runo.rocks/generate-0");
+        let value_0 = String::from("username");
+
+        let key_1 = String::from("v1.secret.runo.rocks/generate-1");
+        let value_1 = String::from("password");
+
+        let post_params = build_post_params();
+        let mut secret = build_managed_secret_with_annotations(
+            secret_name.to_string(),
+            vec![(key_0, value_0), (key_1, value_1)],
+        );
+        // Preset username to value
+        let mut predefined_data: BTreeMap<String, ByteString> = BTreeMap::new();
+        predefined_data.insert(
+            "username".to_string(),
+            ByteString("already-set".to_string().into_bytes()),
+        );
+        secret.data = Some(predefined_data);
+
+        let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        secrets.create(&post_params, &secret).await.unwrap();
+
+        // Data should not be empty
+        assert!(secrets.get(secret_name).await.unwrap().data.is_some());
+
+        // reconcile it
+        reconcile(Arc::new(secret), runo_config).await.unwrap();
+
+        // Value for field username should be untouched
+        assert_eq!(
+            *secrets
+                .get(secret_name)
+                .await
+                .unwrap()
+                .data
+                .unwrap()
+                .get("username")
+                .unwrap(),
+            ByteString("already-set".to_string().into_bytes())
+        );
+        // Value for field password should be generated
+        assert!(secrets
+            .get(secret_name)
+            .await
+            .unwrap()
+            .data
+            .unwrap()
+            .get("password")
+            .is_some());
+        secrets
+            .delete(secret_name, &DeleteParams::default())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn integration_reconcile_should_generate_secret_if_field_already_exists_and_overwrite_is_true(
+    ) {
+        let secret_name = "runo-generate-test-generate-field-already-exists-and-overwrite";
+        let config = Config::from_kubeconfig(&get_kubeconfig_options())
+            .await
+            .unwrap();
+        let client = Client::try_from(config).unwrap();
+
+        let k8s = K8s::build(false);
+        let runo_config = Arc::new(RunoConfig::build(k8s, 300));
+
+        let key_0 = String::from("v1.secret.runo.rocks/generate-0");
+        let value_0 = String::from("username");
+
+        let key_1 = String::from("v1.secret.runo.rocks/force-overwrite-0");
+        let value_1 = String::from("true");
+
+        let key_2 = String::from("v1.secret.runo.rocks/generate-1");
+        let value_2 = String::from("password");
+
+        let post_params = build_post_params();
+        let mut secret = build_managed_secret_with_annotations(
+            secret_name.to_string(),
+            vec![(key_0, value_0), (key_1, value_1), (key_2, value_2)],
+        );
+
+        // Preset username to value
+        let mut predefined_data: BTreeMap<String, ByteString> = BTreeMap::new();
+        predefined_data.insert(
+            "username".to_string(),
+            ByteString("already-set".to_string().into_bytes()),
+        );
+        secret.data = Some(predefined_data);
+
+        let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        secrets.create(&post_params, &secret).await.unwrap();
+
+        // Data should not be empty
+        assert!(secrets.get(secret_name).await.unwrap().data.is_some());
+
+        // reconcile it
+        reconcile(Arc::new(secret), runo_config).await.unwrap();
+
+        // Value for field username should be changed
+        assert_ne!(
+            *secrets
+                .get(secret_name)
+                .await
+                .unwrap()
+                .data
+                .unwrap()
+                .get("username")
+                .unwrap(),
+            ByteString("already-set".to_string().into_bytes())
+        );
         // Value for field password should be generated
         assert!(secrets
             .get(secret_name)

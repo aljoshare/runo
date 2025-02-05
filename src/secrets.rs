@@ -1,5 +1,5 @@
 use crate::annotations::{
-    already_generated, charset, create_checksum, id_iter, length, needs_renewal, pattern,
+    charset, create_checksum, id_iter, length, needs_generation, needs_renewal, pattern,
 };
 use chrono::{DateTime, Utc};
 use k8s_openapi::api::core::v1::Secret;
@@ -79,9 +79,9 @@ fn update_annotations(obj: &Arc<Secret>) -> BTreeMap<String, String> {
         None => BTreeMap::new(),
     };
     for id in id_iter(obj) {
-        if !already_generated(obj, id.as_str()) {
+        if needs_generation(obj, id.as_str()) {
             debug!(
-                "{:?} annotations for id {:?} need to be updated because not generated yet",
+                "{:?} annotations for id {:?} will be updated",
                 obj.name_any(),
                 id
             );
@@ -111,9 +111,9 @@ fn update_data(obj: &Arc<Secret>) -> BTreeMap<String, ByteString> {
         None => BTreeMap::new(),
     };
     for id in id_iter(obj) {
-        if !already_generated(obj, id.as_str()) {
+        if needs_generation(obj, id.as_str()) {
             debug!(
-                "{:?} data for id {:?} needs to be generated because not generated yet",
+                "{:?} data for id {:?} will be generated",
                 obj.name_any(),
                 id
             );
@@ -132,7 +132,7 @@ fn update_data_field(
     obj: &Arc<Secret>,
     id: &str,
 ) -> BTreeMap<String, ByteString> {
-    let key = annotations::key(obj, id);
+    let key = annotations::generate(obj, id);
     let value = generate_random_string(obj, id);
     match value {
         Ok(v) => {

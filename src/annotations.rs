@@ -13,6 +13,7 @@ pub enum V1Annotation {
     Renewal,
     RenewalCron,
     ConfigChecksum,
+    ForceOverwrite,
 }
 
 impl V1Annotation {
@@ -26,6 +27,7 @@ impl V1Annotation {
             V1Annotation::Renewal => "v1.secret.runo.rocks/renewal".to_string(),
             V1Annotation::RenewalCron => "v1.secret.runo.rocks/renewal-cron".to_string(),
             V1Annotation::ConfigChecksum => "v1.secret.runo.rocks/config-checksum".to_string(),
+            V1Annotation::ForceOverwrite => "v1.secret.runo.rocks/force-overwrite".to_string(),
         }
     }
     pub fn value(&self, id: &str) -> String {
@@ -39,6 +41,9 @@ impl V1Annotation {
             V1Annotation::RenewalCron => format!("{}-{}", V1Annotation::RenewalCron.key(), id),
             V1Annotation::ConfigChecksum => {
                 format!("{}-{}", V1Annotation::ConfigChecksum.key(), id)
+            }
+            V1Annotation::ForceOverwrite => {
+                format!("{}-{}", V1Annotation::ForceOverwrite.key(), id)
             }
         }
     }
@@ -54,6 +59,7 @@ impl V1Annotation {
             V1Annotation::Renewal => None,
             V1Annotation::RenewalCron => None,
             V1Annotation::ConfigChecksum => None,
+            V1Annotation::ForceOverwrite => Some("false".to_string()),
         }
     }
 }
@@ -62,6 +68,7 @@ impl V1Annotation {
 pub struct AnnotationResult<T> {
     value: T,
     default: bool,
+    exists: bool,
 }
 
 impl<T> AnnotationResult<T> {
@@ -69,15 +76,40 @@ impl<T> AnnotationResult<T> {
         self.default
     }
 
+    pub fn exists(&self) -> bool {
+        self.exists
+    }
+
     pub fn get_value(self) -> T {
         self.value
     }
 }
 
-pub fn already_generated(obj: &Arc<Secret>, id: &str) -> bool {
-    let generated_at_v1 = V1Annotation::GeneratedAt.value(id);
-    println!("{:?}", obj.annotations().keys());
-    obj.annotations().contains_key(&generated_at_v1)
+fn already_set(obj: &Arc<Secret>, id: &str) -> bool {
+    let generate = generate(obj, id);
+    match obj.data.as_ref() {
+        Some(d) => d.get(&generate.get_value()).is_some(),
+        None => false,
+    }
+}
+
+fn should_force_overwrite(obj: &Arc<Secret>, id: &str) -> bool {
+    force_overwrite(obj, id).get_value() == "true"
+}
+
+pub fn needs_generation(obj: &Arc<Secret>, id: &str) -> bool {
+    if !generate(obj, id).exists() {
+        return false;
+    }
+    if generated_at(obj, id).exists() {
+        return false;
+    }
+    if already_set(obj, id) {
+        if !should_force_overwrite(obj, id) {
+            return false;
+        }
+    };
+    true
 }
 
 pub fn needs_renewal(obj: &Arc<Secret>, id: &str) -> bool {
@@ -114,6 +146,7 @@ fn get_annotation_values_for_id<'a>(obj: &'a Arc<Secret>, id: &'a str) -> Vec<&'
     let annotations_for_id: Vec<(&String, &String)> = obj
         .annotations()
         .iter()
+        .filter(|p| !p.0.starts_with(V1Annotation::ConfigChecksum.key().as_str()))
         .filter(|p| p.0.ends_with(format!("-{}", id).as_str()))
         .collect();
     annotations_for_id.iter().map(|p| p.1).collect()
@@ -133,6 +166,7 @@ pub fn length(obj: &Arc<Secret>, id: &str) -> AnnotationResult<usize> {
                 true => AnnotationResult {
                     value: length,
                     default: false,
+                    exists: true,
                 },
                 false => {
                     error!("Invalid length! Please set a length > 0 and <= 100. Proceeding with default length.");
@@ -140,6 +174,7 @@ pub fn length(obj: &Arc<Secret>, id: &str) -> AnnotationResult<usize> {
                         Some(default) => AnnotationResult {
                             value: default.parse::<i32>().unwrap() as usize,
                             default: true,
+                            exists: false,
                         },
                         None => panic!("No default set for length! Panic!"),
                     }
@@ -150,6 +185,7 @@ pub fn length(obj: &Arc<Secret>, id: &str) -> AnnotationResult<usize> {
             Some(default) => AnnotationResult {
                 value: default.parse::<i32>().unwrap() as usize,
                 default: true,
+                exists: false,
             },
             None => panic!("No default set for length! Panic!"),
         },
@@ -165,10 +201,12 @@ fn _annotation_result(
         Some(value) => AnnotationResult {
             value: value.to_string(),
             default: false,
+            exists: true,
         },
         None => AnnotationResult {
             value: annotation.default().unwrap_or("".to_string()),
             default: true,
+            exists: false,
         },
     };
 }
@@ -190,8 +228,12 @@ pub fn renewal_cron(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
     _annotation_result(obj, V1Annotation::RenewalCron, id)
 }
 
-pub fn key(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
+pub fn generate(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
     _annotation_result(obj, V1Annotation::Generate, id)
+}
+
+pub fn force_overwrite(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
+    _annotation_result(obj, V1Annotation::ForceOverwrite, id)
 }
 
 pub fn id_iter(obj: &Arc<Secret>) -> Vec<String> {
@@ -217,6 +259,8 @@ mod tests {
     use chrono::{DateTime, Utc};
     use k8s_openapi::api::core::v1::Secret;
     use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
+    use k8s_openapi::ByteString;
+    use kube::runtime::predicates::annotations;
     use rstest::*;
 
     use std::collections::BTreeMap;
@@ -394,7 +438,7 @@ mod tests {
     fn v1_key(#[case] key: String, #[case] value: String) {
         let secret = build_secret_with_annotations(vec![(key, value.clone())]);
         assert_eq!(
-            crate::annotations::key(&Arc::new(secret.clone()), "0").get_value(),
+            crate::annotations::generate(&Arc::new(secret.clone()), "0").get_value(),
             value
         );
     }
@@ -424,5 +468,85 @@ mod tests {
         let secret = build_secret_with_annotations(vec![(key, value.to_string())]);
         let checksum = create_checksum(&Arc::new(secret.clone()), "0");
         assert_eq!(checksum, hash);
+    }
+
+    #[rstest]
+    #[case("v1.secret.runo.rocks/force-overwrite-0", "true")]
+    #[case("v1.secret.runo.rocks/force-overwrite-0", "false")]
+    fn v1_force_overwrite(#[case] key: String, #[case] value: bool) {
+        let secret = build_secret_with_annotations(vec![(key, value.to_string())]);
+        assert_eq!(
+            crate::annotations::force_overwrite(&Arc::new(secret), "0").get_value(),
+            value.to_string()
+        );
+    }
+
+    #[rstest]
+    fn v1_force_overwrite_returns_default() {
+        let secret = build_secret_with_annotations(vec![]);
+        assert_eq!(
+            crate::annotations::force_overwrite(&Arc::new(secret.clone()), "0").is_default(),
+            true
+        );
+        assert_eq!(
+            crate::annotations::force_overwrite(&Arc::new(secret), "0").get_value(),
+            "false"
+        );
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string())])]
+    fn needs_generation(#[case] annotations: Vec<(String, String)>) {
+        let secret = build_secret_with_annotations(annotations);
+        assert_eq!(
+            crate::annotations::needs_generation(&Arc::new(secret), "0"),
+            true
+        );
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+    ("v1.secret.runo.rocks/generated-at-0".to_string(), format!("{:?}",SystemTime::now()))])]
+    fn needs_no_generation_already_generated(#[case] annotations: Vec<(String, String)>) {
+        let secret = build_secret_with_annotations(annotations);
+        assert_eq!(
+            crate::annotations::needs_generation(&Arc::new(secret), "0"),
+            false
+        );
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string())])]
+    fn needs_no_generation_already_set(#[case] annotations: Vec<(String, String)>) {
+        let mut secret = build_secret_with_annotations(annotations);
+        let mut predefined_data: BTreeMap<String, ByteString> = BTreeMap::new();
+        predefined_data.insert(
+            "username".to_string(),
+            ByteString("already-set".to_string().into_bytes()),
+        );
+        secret.data = Some(predefined_data);
+        assert_eq!(
+            crate::annotations::needs_generation(&Arc::new(secret), "0"),
+            false
+        );
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+    ("v1.secret.runo.rocks/force-overwrite-0".to_string(), "true".to_string())])]
+    fn needs_generation_already_set_but_force_overwrite(
+        #[case] annotations: Vec<(String, String)>,
+    ) {
+        let mut secret = build_secret_with_annotations(annotations);
+        let mut predefined_data: BTreeMap<String, ByteString> = BTreeMap::new();
+        predefined_data.insert(
+            "username".to_string(),
+            ByteString("already-set".to_string().into_bytes()),
+        );
+        secret.data = Some(predefined_data);
+        assert_eq!(
+            crate::annotations::needs_generation(&Arc::new(secret), "0"),
+            true
+        );
     }
 }
