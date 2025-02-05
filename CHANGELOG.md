@@ -1,5 +1,19 @@
 # Changelog
 
+### [v0.2.15](https://github.com/aljoshare/runo/compare/v0.2.14...v0.2.15) (2025-02-05)
+
+#### Features
+
+* ignore fields already set and support force overwrite
+([5e4b403](https://github.com/aljoshare/runo/commit/5e4b40306cdf7511626ca7354396a24cec68f071))
+
+#### Fixes
+
+* **annotations:** filter checksum annotation to prevent infinite loop
+([b06847d](https://github.com/aljoshare/runo/commit/b06847d55943134ed8cffb68b6b333e49cc0b98a))
+* **annotations:** use values instead of keys for checksum
+([793b839](https://github.com/aljoshare/runo/commit/793b839d7170398aa2bc091b56e17b4410e8ebcf))
+
 ### [v0.2.14](https://github.com/aljoshare/runo/compare/v0.2.13...v0.2.14) (2025-01-18)
 
 #### Fixes
