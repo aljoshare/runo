@@ -136,15 +136,4 @@ jobs:
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@sha256:%s ' *)
-      - name: Download checksum folders
-        uses: actions/download-artifact@v4
-      - name: Merge checksum.txt files
-        run: for i in  *-checksum ; do cat $i/checksum.txt >> checksums.txt; done
-      - name: Upload checksums.txt
-        uses: actions/upload-artifact@v4
-        with:
-          name: checksums
-          path: checksums.txt
-          if-no-files-found: error
-          retention-days: 5
       
