@@ -64,11 +64,11 @@ mod tests {
 
     #[rstest]
     fn v1_unmanaged_secret_explicitly(unmanaged_secret_explicitly: Arc<Secret>) {
-        assert_eq!(managed_by_us(&unmanaged_secret_explicitly), false);
+        assert!(!managed_by_us(&unmanaged_secret_explicitly));
     }
 
     #[rstest]
     fn v1_unmanaged_secret_implicitly(unmanaged_secret_explicitly: Arc<Secret>) {
-        assert_eq!(managed_by_us(&unmanaged_secret_explicitly), false);
+        assert!(!managed_by_us(&unmanaged_secret_explicitly));
     }
 }

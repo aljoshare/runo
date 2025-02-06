@@ -178,8 +178,7 @@ mod tests {
             .unwrap()
             .data
             .unwrap()
-            .get("username")
-            .is_some());
+            .contains_key("username"));
         // Value for field password should be generated
         assert!(secrets
             .get(secret_name)
@@ -187,8 +186,7 @@ mod tests {
             .unwrap()
             .data
             .unwrap()
-            .get("password")
-            .is_some());
+            .contains_key("password"));
         secrets
             .delete(secret_name, &DeleteParams::default())
             .await
@@ -253,8 +251,7 @@ mod tests {
             .unwrap()
             .data
             .unwrap()
-            .get("password")
-            .is_some());
+            .contains_key("password"));
         secrets
             .delete(secret_name, &DeleteParams::default())
             .await
@@ -324,8 +321,7 @@ mod tests {
             .unwrap()
             .data
             .unwrap()
-            .get("password")
-            .is_some());
+            .contains_key("password"));
         secrets
             .delete(secret_name, &DeleteParams::default())
             .await

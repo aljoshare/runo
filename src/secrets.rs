@@ -388,7 +388,6 @@ mod tests {
         let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
         let data = update_data(&Arc::from(secret)).unwrap();
         assert!(data.contains_key("username"));
-        assert!(data.get("username").is_some())
     }
 
     #[test]
