@@ -3,21 +3,23 @@ use crate::annotations::{
 };
 use chrono::{DateTime, Utc};
 use k8s_openapi::api::core::v1::Secret;
-use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
 use k8s_openapi::ByteString;
 use kube::api::Patch;
 use kube::{Api, ResourceExt};
 use rand::Rng;
 
-use crate::errors::{CantCreateStringFromRegex, InvalidRegexPattern};
+use crate::errors::{
+    AnnotationUpdateError, CantCreateStringFromRegex, DataUpdateError, InvalidRegexPattern,
+    SecretUpdateError,
+};
 use std::collections::BTreeMap;
 
 use crate::annotations;
 use crate::k8s::K8s;
 use std::sync::Arc;
 use std::time::SystemTime;
+use tracing::error;
 use tracing::log::debug;
-use tracing::{error, info};
 
 pub fn generate_random_string(
     obj: &Arc<Secret>,
@@ -91,7 +93,9 @@ fn generate_random_string_from_pattern(
     }
 }
 
-fn update_annotations(obj: &Arc<Secret>) -> BTreeMap<String, String> {
+fn update_annotations(
+    obj: &Arc<Secret>,
+) -> Result<BTreeMap<String, String>, AnnotationUpdateError> {
     let mut secret_annotations = match &obj.metadata.annotations {
         Some(annotations) => annotations.clone(),
         None => BTreeMap::new(),
@@ -120,11 +124,11 @@ fn update_annotations(obj: &Arc<Secret>) -> BTreeMap<String, String> {
             format!("{}-{}", annotations::V1Annotation::ConfigChecksum.key(), id);
         secret_annotations.insert(checksum_v1, checksum);
     }
-    secret_annotations
+    Ok(secret_annotations)
 }
 
-fn update_data(obj: &Arc<Secret>) -> BTreeMap<String, ByteString> {
-    let mut secret_data = match &obj.data {
+fn update_data(obj: &Arc<Secret>) -> Result<BTreeMap<String, ByteString>, DataUpdateError> {
+    let mut data = match &obj.data {
         Some(data) => data.clone(),
         None => BTreeMap::new(),
     };
@@ -135,21 +139,21 @@ fn update_data(obj: &Arc<Secret>) -> BTreeMap<String, ByteString> {
                 obj.name_any(),
                 id
             );
-            secret_data = update_data_field(secret_data, obj, &id);
+            data = update_data_field(data, obj, &id)?;
         }
         if needs_renewal(obj, id.as_str()) {
             debug!("{:?} for id {:?} needs to be renewed", obj.name_any(), id);
-            secret_data = update_data_field(secret_data, obj, &id);
+            data = update_data_field(data, obj, &id)?;
         }
     }
-    secret_data
+    Ok(data)
 }
 
 fn update_data_field(
     mut secret_data: BTreeMap<String, ByteString>,
     obj: &Arc<Secret>,
     id: &str,
-) -> BTreeMap<String, ByteString> {
+) -> Result<BTreeMap<String, ByteString>, DataUpdateError> {
     let key = annotations::generate(obj, id);
     let value = generate_random_string(obj, id);
     match value {
@@ -158,7 +162,7 @@ fn update_data_field(
                 key.get_value().to_string(),
                 ByteString(v.as_bytes().to_vec()),
             );
-            secret_data
+            Ok(secret_data)
         }
         Err(e) => {
             error!(
@@ -166,35 +170,39 @@ fn update_data_field(
                 obj.name_any(),
                 e
             );
-            secret_data
+            Err(DataUpdateError)
         }
     }
 }
 
-fn get_updated_secret(obj: &Arc<Secret>) -> Secret {
-    Secret {
-        metadata: ObjectMeta {
-            annotations: Some(update_annotations(obj)),
-            ..ObjectMeta::default()
-        },
-        data: Some(update_data(obj)),
+fn get_updated_secret(obj: &Arc<Secret>) -> Result<Secret, SecretUpdateError> {
+    let maybe_data = update_data(obj);
+    let maybe_annotations = update_annotations(obj);
+    let mut secret = Secret {
         ..Secret::default()
+    };
+    if maybe_data.is_err() || maybe_annotations.is_err() {
+        return Err(SecretUpdateError);
     }
+    secret.data = Some(maybe_data.unwrap());
+    secret.metadata.annotations = Some(maybe_annotations.unwrap());
+    Ok(secret)
 }
 
-pub async fn update(obj: &Arc<Secret>, k8s: &K8s) {
+pub async fn update(obj: &Arc<Secret>, k8s: &K8s) -> Result<Secret, SecretUpdateError> {
     let secrets: Api<Secret> =
         Api::namespaced(K8s::get_client().await, obj.namespace().unwrap().as_str());
+    let updated_secret = get_updated_secret(obj)?;
     match secrets
         .patch(
             &obj.name_any(),
             &k8s.get_patch_params(),
-            &Patch::Apply(&get_updated_secret(obj)),
+            &Patch::Apply(&updated_secret),
         )
         .await
     {
-        Ok(_) => info!("Secret reconciled successfully"),
-        Err(e) => error!("Couldn't reconcile secret: {:?}", e),
+        Ok(_) => Ok(updated_secret),
+        Err(_) => Err(SecretUpdateError),
     }
 }
 

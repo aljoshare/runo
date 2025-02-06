@@ -50,3 +50,30 @@ impl fmt::Display for InvalidRegexPattern {
         )
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct DataUpdateError;
+
+impl fmt::Display for DataUpdateError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Data update failed!",)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct AnnotationUpdateError;
+
+impl fmt::Display for AnnotationUpdateError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Annotation update failed!",)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SecretUpdateError;
+
+impl fmt::Display for SecretUpdateError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Secret update failed!",)
+    }
+}

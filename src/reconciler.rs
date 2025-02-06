@@ -11,7 +11,7 @@ use std::time::Duration;
 use crate::k8s::K8s;
 use futures::StreamExt;
 use kube::api::ListParams;
-use tracing::info;
+use tracing::{error, info};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {}
@@ -20,7 +20,11 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 pub(crate) async fn reconcile(obj: Arc<Secret>, config: Arc<RunoConfig>) -> Result<Action> {
     info!("reconcile request: {}", obj.name_any());
     if labels::managed_by_us(&obj) {
-        secrets::update(&obj, &config.k8s).await;
+        let maybe_secret = secrets::update(&obj, &config.k8s).await;
+        match maybe_secret {
+            Ok(_) => info!("Secret updated successfully!"),
+            Err(_) => error!("Secret update failed!"),
+        }
         cron::update(&obj, &config.k8s).await
     }
     Ok(Action::requeue(Duration::from_secs(
