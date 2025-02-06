@@ -136,7 +136,7 @@ metadata:
     v1.secret.runo.rocks/managed: "true"
   annotations:
     v1.secret.runo.rocks/generate-${ID}: ${FIELD_NAME} # Example: password
-    v1.secret.runo.rocks/force-overwrite-${ID}: true # Example: password
+    v1.secret.runo.rocks/force-overwrite-${ID}: true
 type: Opaque
 data:
 ```
