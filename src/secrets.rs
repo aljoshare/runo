@@ -207,6 +207,7 @@ mod tests {
     use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
 
     use regex::Regex;
+    use rstest::rstest;
     use std::collections::BTreeMap;
     use std::sync::Arc;
     use std::time::SystemTime;
@@ -284,6 +285,17 @@ mod tests {
         let key_1 = String::from("v1.secret.runo.rocks/pattern-0");
         let value_1 = String::from("");
         let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
+        let result = generate_random_string(&Arc::from(secret), "0");
+        assert!(result.is_err())
+    }
+
+    #[rstest]
+    #[case("v1.secret.runo.rocks/pattern-0", "[abcd]+")]
+    #[case("v1.secret.runo.rocks/pattern-0", "[abcd]?")]
+    #[case("v1.secret.runo.rocks/pattern-0", "[abcd]*")]
+    #[case("v1.secret.runo.rocks/pattern-0", "[abcd]{1, 10}")]
+    fn test_generate_random_string_pattern_invalid(#[case] key: String, #[case] value: String) {
+        let secret = build_secret_with_annotations(vec![(key, value)]);
         let result = generate_random_string(&Arc::from(secret), "0");
         assert!(result.is_err())
     }
