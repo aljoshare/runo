@@ -35,3 +35,18 @@ impl fmt::Display for LogLevelMissing {
         write!(f, "RUST_LOG is not set properly!")
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct InvalidRegexPattern {
+    pub pattern: String,
+}
+
+impl fmt::Display for InvalidRegexPattern {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Invalid pattern {}! You can't use quantifiers (e.g. +, *, ? or {{}}) in regex pattern",
+            self.pattern
+        )
+    }
+}
