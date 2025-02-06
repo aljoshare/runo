@@ -9,7 +9,7 @@ use kube::api::Patch;
 use kube::{Api, ResourceExt};
 use rand::Rng;
 
-use crate::errors::CantCreateStringFromRegex;
+use crate::errors::{CantCreateStringFromRegex, InvalidRegexPattern};
 use std::collections::BTreeMap;
 
 use crate::annotations;
@@ -32,7 +32,13 @@ pub fn generate_random_string(
             charset.get_value().as_str(),
         ))
     } else {
-        generate_random_string_from_pattern(length.get_value(), pattern.get_value().as_str())
+        match validate_pattern(pattern.get_value().as_str()) {
+            Ok(p) => generate_random_string_from_pattern(length.get_value(), p),
+            Err(e) => {
+                error!("{}", e);
+                Err(CantCreateStringFromRegex)
+            }
+        }
     };
     debug!("Generated random string: {:?}", random_string);
     random_string
@@ -48,6 +54,18 @@ fn generate_random_string_from_charset(length: usize, charset: &str) -> String {
         })
         .collect();
     random_string
+}
+
+fn validate_pattern(pattern: &str) -> Result<&str, InvalidRegexPattern> {
+    let forbidden_chars = vec!["+", "?", "*", "{", "}"];
+    for char in forbidden_chars {
+        if pattern.contains(char) {
+            return Err(InvalidRegexPattern {
+                pattern: pattern.to_string(),
+            });
+        }
+    }
+    Ok(pattern)
 }
 
 fn generate_random_string_from_pattern(
@@ -175,8 +193,8 @@ pub async fn update(obj: &Arc<Secret>, k8s: &K8s) {
         )
         .await
     {
-        Ok(_) => info!("Secret patched successfully"),
-        Err(e) => error!("Can't patch secret: {:?}", e),
+        Ok(_) => info!("Secret reconciled successfully"),
+        Err(e) => error!("Couldn't reconcile secret: {:?}", e),
     }
 }
 
@@ -189,6 +207,7 @@ mod tests {
     use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
 
     use regex::Regex;
+    use rstest::rstest;
     use std::collections::BTreeMap;
     use std::sync::Arc;
     use std::time::SystemTime;
@@ -266,6 +285,17 @@ mod tests {
         let key_1 = String::from("v1.secret.runo.rocks/pattern-0");
         let value_1 = String::from("");
         let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
+        let result = generate_random_string(&Arc::from(secret), "0");
+        assert!(result.is_err())
+    }
+
+    #[rstest]
+    #[case("v1.secret.runo.rocks/pattern-0", "[abcd]+")]
+    #[case("v1.secret.runo.rocks/pattern-0", "[abcd]?")]
+    #[case("v1.secret.runo.rocks/pattern-0", "[abcd]*")]
+    #[case("v1.secret.runo.rocks/pattern-0", "[abcd]{1, 10}")]
+    fn test_generate_random_string_pattern_invalid(#[case] key: String, #[case] value: String) {
+        let secret = build_secret_with_annotations(vec![(key, value)]);
         let result = generate_random_string(&Arc::from(secret), "0");
         assert!(result.is_err())
     }

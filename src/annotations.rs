@@ -135,7 +135,6 @@ pub fn needs_renewal(obj: &Arc<Secret>, id: &str) -> bool {
 pub fn create_checksum(obj: &Arc<Secret>, id: &str) -> String {
     let mut hasher = Sha256::new();
     for annotation in get_annotation_values_for_id(obj, id) {
-        println!("{}", annotation);
         hasher.update(annotation);
     }
     let hash = hasher.finalize();
