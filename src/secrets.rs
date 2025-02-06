@@ -316,7 +316,7 @@ mod tests {
         let value_2 = String::from("\\S");
         let secret = build_secret_with_annotations(vec![(key_1, value_1), (key_2, value_2)]);
         let start: DateTime<Utc> = SystemTime::now().into();
-        let annotations = update_annotations(&Arc::from(secret));
+        let annotations = update_annotations(&Arc::from(secret)).unwrap();
         let end: DateTime<Utc> = SystemTime::now().into();
         assert!(annotations.contains_key("v1.secret.runo.rocks/generated-at-0"));
         assert!(annotations.contains_key("v1.secret.runo.rocks/config-checksum-0"));
@@ -338,7 +338,7 @@ mod tests {
         let key_2 = String::from("v1.secret.runo.rocks/renewal-0");
         let value_2 = String::from("true");
         let secret = build_secret_with_annotations(vec![(key_1, value_1), (key_2, value_2)]);
-        let annotations = update_annotations(&Arc::from(secret));
+        let annotations = update_annotations(&Arc::from(secret)).unwrap();
         assert!(annotations.contains_key("v1.secret.runo.rocks/renewal-0"));
         let needs_renewal: bool = annotations
             .get("v1.secret.runo.rocks/renewal-0")
@@ -353,7 +353,7 @@ mod tests {
         let key_1 = String::from("v1.secret.runo.rocks/renewal-0");
         let value_1 = String::from("false");
         let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
-        let annotations = update_annotations(&Arc::from(secret));
+        let annotations = update_annotations(&Arc::from(secret)).unwrap();
         assert!(annotations.contains_key("v1.secret.runo.rocks/renewal-0"));
         let needs_renewal: bool = annotations
             .get("v1.secret.runo.rocks/renewal-0")
@@ -368,7 +368,7 @@ mod tests {
         let key_1 = String::from("v1.secret.runo.rocks/generate-0");
         let value_1 = String::from("username");
         let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
-        let data = update_data(&Arc::from(secret));
+        let data = update_data(&Arc::from(secret)).unwrap();
         assert!(data.contains_key("username"));
         assert!(data.get("username").is_some())
     }
@@ -378,7 +378,7 @@ mod tests {
         let key_1 = String::from("v1.secret.runo.rocks/generate-0");
         let value_1 = String::from("username");
         let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
-        let annotations = update_annotations(&Arc::from(secret.clone()));
+        let annotations = update_annotations(&Arc::from(secret.clone())).unwrap();
         assert!(annotations.contains_key("v1.secret.runo.rocks/config-checksum-0"));
         let checksum = annotations
             .get("v1.secret.runo.rocks/config-checksum-0")
