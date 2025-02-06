@@ -175,8 +175,8 @@ pub async fn update(obj: &Arc<Secret>, k8s: &K8s) {
         )
         .await
     {
-        Ok(_) => info!("Secret patched successfully"),
-        Err(e) => error!("Can't patch secret: {:?}", e),
+        Ok(_) => info!("Secret reconciled successfully"),
+        Err(e) => error!("Couldn't reconcile secret: {:?}", e),
     }
 }
 
