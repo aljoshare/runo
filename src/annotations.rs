@@ -8,6 +8,7 @@ pub enum V1Annotation {
     Charset,
     Generate,
     GeneratedAt,
+    GeneratedWithChecksum,
     Length,
     Pattern,
     Renewal,
@@ -22,6 +23,9 @@ impl V1Annotation {
             V1Annotation::Charset => "v1.secret.runo.rocks/charset".to_string(),
             V1Annotation::Generate => "v1.secret.runo.rocks/generate".to_string(),
             V1Annotation::GeneratedAt => "v1.secret.runo.rocks/generated-at".to_string(),
+            V1Annotation::GeneratedWithChecksum => {
+                "v1.secret.runo.rocks/generated-with-checksum".to_string()
+            }
             V1Annotation::Length => "v1.secret.runo.rocks/length".to_string(),
             V1Annotation::Pattern => "v1.secret.runo.rocks/pattern".to_string(),
             V1Annotation::Renewal => "v1.secret.runo.rocks/renewal".to_string(),
@@ -35,6 +39,9 @@ impl V1Annotation {
             V1Annotation::Charset => format!("{}-{}", V1Annotation::Charset.key(), id),
             V1Annotation::Generate => format!("{}-{}", V1Annotation::Generate.key(), id),
             V1Annotation::GeneratedAt => format!("{}-{}", V1Annotation::GeneratedAt.key(), id),
+            V1Annotation::GeneratedWithChecksum => {
+                format!("{}-{}", V1Annotation::GeneratedWithChecksum.key(), id)
+            }
             V1Annotation::Length => format!("{}-{}", V1Annotation::Length.key(), id),
             V1Annotation::Pattern => format!("{}-{}", V1Annotation::Pattern.key(), id),
             V1Annotation::Renewal => format!("{}-{}", V1Annotation::Renewal.key(), id),
@@ -54,6 +61,7 @@ impl V1Annotation {
             }
             V1Annotation::Generate => None,
             V1Annotation::GeneratedAt => None,
+            V1Annotation::GeneratedWithChecksum => None,
             V1Annotation::Length => Some("32".to_string()),
             V1Annotation::Pattern => Some("[a-zA-Z0-9\\-\\_\\(\\)\\%\\$\\@]".to_string()),
             V1Annotation::Renewal => None,
@@ -98,18 +106,20 @@ fn should_force_overwrite(obj: &Arc<Secret>, id: &str) -> bool {
 }
 
 pub fn needs_generation(obj: &Arc<Secret>, id: &str) -> bool {
-    if !generate(obj, id).exists() {
-        return false;
-    }
-    if generated_at(obj, id).exists() {
-        return false;
-    }
-    if already_set(obj, id) {
-        if !should_force_overwrite(obj, id) {
-            return false;
+    if generate(obj, id).exists() {
+        if generated_at(obj, id).exists() {
+            let checksum = checksum(obj, id);
+            let generated_with_checksum = generated_with_checksum(obj, id);
+            if checksum.exists() && generated_with_checksum.exists() && checksum.get_value() != generated_with_checksum.get_value() {
+                return true;
+            }
+        } else if !already_set(obj, id) {
+            return true;
+        } else if should_force_overwrite(obj, id) {
+            return true;
         }
-    };
-    true
+    }
+    false
 }
 
 pub fn needs_renewal(obj: &Arc<Secret>, id: &str) -> bool {
@@ -146,6 +156,10 @@ fn get_annotation_values_for_id<'a>(obj: &'a Arc<Secret>, id: &'a str) -> Vec<&'
         .annotations()
         .iter()
         .filter(|p| !p.0.starts_with(V1Annotation::ConfigChecksum.key().as_str()))
+        .filter(|p| {
+            !p.0.starts_with(V1Annotation::GeneratedWithChecksum.key().as_str())
+        })
+        .filter(|p| !p.0.starts_with(V1Annotation::GeneratedAt.key().as_str()))
         .filter(|p| p.0.ends_with(format!("-{}", id).as_str()))
         .collect();
     annotations_for_id.iter().map(|p| p.1).collect()
@@ -158,7 +172,7 @@ pub fn has_cron(obj: &Arc<Secret>, id: &str) -> bool {
 
 pub fn length(obj: &Arc<Secret>, id: &str) -> AnnotationResult<usize> {
     let length_v1 = V1Annotation::Length.value(id);
-    return match obj.annotations().get(&length_v1) {
+    match obj.annotations().get(&length_v1) {
         Some(value) => {
             let length = value.parse::<i32>().unwrap() as usize;
             match length > 0 && length <= 100 {
@@ -188,7 +202,7 @@ pub fn length(obj: &Arc<Secret>, id: &str) -> AnnotationResult<usize> {
             },
             None => panic!("No default set for length! Panic!"),
         },
-    };
+    }
 }
 
 fn _annotation_result(
@@ -196,7 +210,7 @@ fn _annotation_result(
     annotation: V1Annotation,
     id: &str,
 ) -> AnnotationResult<String> {
-    return match obj.annotations().get(annotation.value(id).as_str()) {
+    match obj.annotations().get(annotation.value(id).as_str()) {
         Some(value) => AnnotationResult {
             value: value.to_string(),
             default: false,
@@ -207,7 +221,7 @@ fn _annotation_result(
             default: true,
             exists: false,
         },
-    };
+    }
 }
 
 pub fn charset(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
@@ -218,9 +232,12 @@ pub fn pattern(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
     _annotation_result(obj, V1Annotation::Pattern, id)
 }
 
-#[allow(dead_code)]
 pub fn generated_at(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
     _annotation_result(obj, V1Annotation::GeneratedAt, id)
+}
+
+pub fn generated_with_checksum(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
+    _annotation_result(obj, V1Annotation::GeneratedWithChecksum, id)
 }
 
 pub fn renewal_cron(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
@@ -259,7 +276,6 @@ mod tests {
     use k8s_openapi::api::core::v1::Secret;
     use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
     use k8s_openapi::ByteString;
-    use kube::runtime::predicates::annotations;
     use rstest::*;
 
     use std::collections::BTreeMap;

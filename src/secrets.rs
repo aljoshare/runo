@@ -1,5 +1,6 @@
 use crate::annotations::{
-    charset, create_checksum, id_iter, length, needs_generation, needs_renewal, pattern,
+    charset, create_checksum, generated_with_checksum, id_iter, length, needs_generation,
+    needs_renewal, pattern,
 };
 use chrono::{DateTime, Utc};
 use k8s_openapi::api::core::v1::Secret;
@@ -101,6 +102,16 @@ fn update_annotations(
         None => BTreeMap::new(),
     };
     for id in id_iter(obj) {
+        if !generated_with_checksum(obj, &id).exists() {
+            // Migration code to make sure that old secret witout the annotations gets the update
+            let generated_with_checksum_v1 = format!(
+                "{}-{}",
+                annotations::V1Annotation::GeneratedWithChecksum.key(),
+                id
+            );
+            let checksum = create_checksum(obj, id.as_str());
+            secret_annotations.insert(generated_with_checksum_v1, checksum);
+        }
         if needs_generation(obj, id.as_str()) {
             debug!(
                 "{:?} annotations for id {:?} will be updated",
@@ -111,6 +122,13 @@ fn update_annotations(
                 format!("{}-{}", annotations::V1Annotation::GeneratedAt.key(), id);
             let now: DateTime<Utc> = SystemTime::now().into();
             secret_annotations.insert(generated_at_v1, now.timestamp().to_string());
+            let generated_with_checksum_v1 = format!(
+                "{}-{}",
+                annotations::V1Annotation::GeneratedWithChecksum.key(),
+                id
+            );
+            let checksum = create_checksum(obj, id.as_str());
+            secret_annotations.insert(generated_with_checksum_v1, checksum);
         }
         if needs_renewal(obj, id.as_str()) {
             secret_annotations.insert(
