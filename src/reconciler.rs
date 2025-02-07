@@ -443,7 +443,7 @@ mod tests {
         .into_request_partial::<Secret>();
         let _ = secrets
             .patch_metadata(
-                &secret_name,
+                secret_name,
                 &patch_params,
                 &Patch::Apply(&reconfigured_metadata),
             )
