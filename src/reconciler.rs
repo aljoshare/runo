@@ -67,7 +67,7 @@ mod tests {
     use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
 
     use k8s_openapi::ByteString;
-    use kube::api::{DeleteParams, PostParams};
+    use kube::api::{DeleteParams, PartialObjectMetaExt, Patch, PatchParams, PostParams};
     use kube::config::KubeConfigOptions;
 
     use kube::{Api, Client, Config, ResourceExt};
@@ -94,6 +94,15 @@ mod tests {
     fn build_post_params() -> PostParams {
         PostParams {
             dry_run: false,
+            field_manager: Some("runo-integration-tests".to_string()),
+        }
+    }
+
+    fn build_patch_params() -> PatchParams {
+        PatchParams {
+            dry_run: false,
+            force: true,
+            field_validation: Some(kube::api::ValidationDirective::Strict),
             field_manager: Some("runo-integration-tests".to_string()),
         }
     }
@@ -374,6 +383,106 @@ mod tests {
             .unwrap()
             .annotations()
             .contains_key("v1.secret.runo.rocks/config-checksum-1"));
+
+        secrets
+            .delete(secret_name, &DeleteParams::default())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn integration_reconcile_should_generate_after_reconfiguration() {
+        let secret_name = "runo-generate-test-generate-after-reconfiguration";
+        let config = Config::from_kubeconfig(&get_kubeconfig_options())
+            .await
+            .unwrap();
+        let client = Client::try_from(config).unwrap();
+
+        let k8s = K8s::build(false);
+        let runo_config = Arc::new(RunoConfig::build(k8s, 300));
+
+        let key_0 = String::from("v1.secret.runo.rocks/generate-0");
+        let value_0 = String::from("username");
+
+        let key_1 = String::from("v1.secret.runo.rocks/length-0");
+        let value_1 = String::from("10");
+
+        let post_params = build_post_params();
+        let patch_params = build_patch_params();
+
+        let secret = build_managed_secret_with_annotations(
+            secret_name.to_string(),
+            vec![(key_0, value_0), (key_1, value_1)],
+        );
+        let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        secrets.create(&post_params, &secret).await.unwrap();
+
+        // Data should be empty
+        assert!(secrets.get(secret_name).await.unwrap().data.is_none());
+
+        // reconcile it
+        reconcile(Arc::new(secret.clone()), runo_config.clone())
+            .await
+            .unwrap();
+
+        // Value for field username should be generated and has length of 10
+        let secret_data = secrets.get(secret_name).await.unwrap().data.unwrap();
+        let username = from_utf8(&secret_data.get("username").unwrap().0).unwrap();
+        assert_eq!(username.chars().count(), 10);
+
+        let key_replace = String::from("v1.secret.runo.rocks/length-0");
+        let value_replace = String::from("20");
+
+        // Reconfigure secret
+        let mut reconfigured_annotations = BTreeMap::new();
+        reconfigured_annotations.insert(key_replace, value_replace);
+        let reconfigured_metadata = ObjectMeta {
+            annotations: Some(reconfigured_annotations),
+            ..Default::default()
+        }
+        .into_request_partial::<Secret>();
+        let _ = secrets
+            .patch_metadata(
+                &secret_name,
+                &patch_params,
+                &Patch::Apply(&reconfigured_metadata),
+            )
+            .await
+            .unwrap();
+
+        // Annotation should be changed
+        assert_eq!(
+            secrets
+                .get(secret_name)
+                .await
+                .unwrap()
+                .annotations()
+                .get("v1.secret.runo.rocks/length-0")
+                .unwrap(),
+            "20"
+        );
+
+        // reconcile it to update the checksums
+        reconcile(
+            Arc::new(secrets.get(secret_name).await.unwrap()),
+            runo_config.clone(),
+        )
+        .await
+        .unwrap();
+
+        // reconcile it again to update the data
+
+        reconcile(
+            Arc::new(secrets.get(secret_name).await.unwrap()),
+            runo_config.clone(),
+        )
+        .await
+        .unwrap();
+
+        // Value for field username should be generated and has length of 20 after reconfiguration
+        let secret_data = secrets.get(secret_name).await.unwrap().data.unwrap();
+        let username = from_utf8(&secret_data.get("username").unwrap().0).unwrap();
+        assert_eq!(username.chars().count(), 20);
 
         secrets
             .delete(secret_name, &DeleteParams::default())
