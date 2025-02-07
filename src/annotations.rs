@@ -2,7 +2,7 @@ use k8s_openapi::api::core::v1::Secret;
 use kube::ResourceExt;
 use sha2::{Digest, Sha256};
 use std::sync::Arc;
-use tracing::{debug, error};
+use tracing::{debug, error, info};
 
 pub enum V1Annotation {
     Charset,
@@ -111,11 +111,13 @@ pub fn needs_generation(obj: &Arc<Secret>, id: &str) -> bool {
             let checksum = checksum(obj, id);
             let generated_with_checksum = generated_with_checksum(obj, id);
             if checksum.exists() && generated_with_checksum.exists() && checksum.get_value() != generated_with_checksum.get_value() {
+                info!("(Re)generation of secret because checksum changed");
                 return true;
             }
         } else if !already_set(obj, id) {
             return true;
         } else if should_force_overwrite(obj, id) {
+            info!("Overwrite existing field because annotation is set");
             return true;
         }
     }
