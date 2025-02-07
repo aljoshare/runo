@@ -530,4 +530,41 @@ mod tests {
         secret.data = Some(predefined_data);
         assert!(crate::annotations::needs_generation(&Arc::new(secret), "0"));
     }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+    ("v1.secret.runo.rocks/generated-at-0".to_string(), format!("{:?}",SystemTime::now())),
+    ("v1.secret.runo.rocks/generated-with-checksum-0".to_string(), "fghij".to_string()),
+    ("v1.secret.runo.rocks/config-checksum-0".to_string(), "abcde".to_string())])]
+    fn needs_generation_checksum_changed(#[case] annotations: Vec<(String, String)>) {
+        let secret = build_secret_with_annotations(annotations);
+        assert!(crate::annotations::needs_generation(&Arc::new(secret), "0"));
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+    ("v1.secret.runo.rocks/generated-at-0".to_string(), format!("{:?}",SystemTime::now())),
+    ("v1.secret.runo.rocks/generated-with-checksum-0".to_string(), "abcde".to_string()),
+    ("v1.secret.runo.rocks/config-checksum-0".to_string(), "abcde".to_string())])]
+    fn needs_no_generation_checksum_didnt_change(#[case] annotations: Vec<(String, String)>) {
+        let secret = build_secret_with_annotations(annotations);
+        assert!(!crate::annotations::needs_generation(
+            &Arc::new(secret),
+            "0"
+        ));
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+    ("v1.secret.runo.rocks/generated-at-0".to_string(), format!("{:?}",SystemTime::now())),
+    ("v1.secret.runo.rocks/config-checksum-0".to_string(), "abcde".to_string())])]
+    fn needs_no_generation_generated_with_checksum_doesnt_exist(
+        #[case] annotations: Vec<(String, String)>,
+    ) {
+        let secret = build_secret_with_annotations(annotations);
+        assert!(!crate::annotations::needs_generation(
+            &Arc::new(secret),
+            "0"
+        ));
+    }
 }
