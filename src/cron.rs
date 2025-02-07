@@ -162,6 +162,6 @@ mod tests {
     fn test_build_cronjob() {
         let secret = Arc::from(build_secret());
         let cronjob = build_cronjob(&secret, "test-secret", "0");
-        assert_eq!(build_cron_name(&*Arc::new(secret), "0"), cronjob.name_any())
+        assert_eq!(build_cron_name(&secret, "0"), cronjob.name_any())
     }
 }

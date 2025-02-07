@@ -2,12 +2,13 @@ use k8s_openapi::api::core::v1::Secret;
 use kube::ResourceExt;
 use sha2::{Digest, Sha256};
 use std::sync::Arc;
-use tracing::{debug, error};
+use tracing::{debug, error, info};
 
 pub enum V1Annotation {
     Charset,
     Generate,
     GeneratedAt,
+    GeneratedWithChecksum,
     Length,
     Pattern,
     Renewal,
@@ -22,6 +23,9 @@ impl V1Annotation {
             V1Annotation::Charset => "v1.secret.runo.rocks/charset".to_string(),
             V1Annotation::Generate => "v1.secret.runo.rocks/generate".to_string(),
             V1Annotation::GeneratedAt => "v1.secret.runo.rocks/generated-at".to_string(),
+            V1Annotation::GeneratedWithChecksum => {
+                "v1.secret.runo.rocks/generated-with-checksum".to_string()
+            }
             V1Annotation::Length => "v1.secret.runo.rocks/length".to_string(),
             V1Annotation::Pattern => "v1.secret.runo.rocks/pattern".to_string(),
             V1Annotation::Renewal => "v1.secret.runo.rocks/renewal".to_string(),
@@ -35,6 +39,9 @@ impl V1Annotation {
             V1Annotation::Charset => format!("{}-{}", V1Annotation::Charset.key(), id),
             V1Annotation::Generate => format!("{}-{}", V1Annotation::Generate.key(), id),
             V1Annotation::GeneratedAt => format!("{}-{}", V1Annotation::GeneratedAt.key(), id),
+            V1Annotation::GeneratedWithChecksum => {
+                format!("{}-{}", V1Annotation::GeneratedWithChecksum.key(), id)
+            }
             V1Annotation::Length => format!("{}-{}", V1Annotation::Length.key(), id),
             V1Annotation::Pattern => format!("{}-{}", V1Annotation::Pattern.key(), id),
             V1Annotation::Renewal => format!("{}-{}", V1Annotation::Renewal.key(), id),
@@ -54,6 +61,7 @@ impl V1Annotation {
             }
             V1Annotation::Generate => None,
             V1Annotation::GeneratedAt => None,
+            V1Annotation::GeneratedWithChecksum => None,
             V1Annotation::Length => Some("32".to_string()),
             V1Annotation::Pattern => Some("[a-zA-Z0-9\\-\\_\\(\\)\\%\\$\\@]".to_string()),
             V1Annotation::Renewal => None,
@@ -98,18 +106,25 @@ fn should_force_overwrite(obj: &Arc<Secret>, id: &str) -> bool {
 }
 
 pub fn needs_generation(obj: &Arc<Secret>, id: &str) -> bool {
-    if !generate(obj, id).exists() {
-        return false;
-    }
-    if generated_at(obj, id).exists() {
-        return false;
-    }
-    if already_set(obj, id) {
-        if !should_force_overwrite(obj, id) {
-            return false;
+    if generate(obj, id).exists() {
+        if generated_at(obj, id).exists() {
+            let checksum = checksum(obj, id);
+            let generated_with_checksum = generated_with_checksum(obj, id);
+            if checksum.exists()
+                && generated_with_checksum.exists()
+                && (checksum.get_value() != generated_with_checksum.get_value())
+            {
+                info!("(Re)generation of secret because checksum changed");
+                return true;
+            }
+        } else if !already_set(obj, id) {
+            return true;
+        } else if should_force_overwrite(obj, id) {
+            info!("Overwrite existing field because annotation is set");
+            return true;
         }
-    };
-    true
+    }
+    false
 }
 
 pub fn needs_renewal(obj: &Arc<Secret>, id: &str) -> bool {
@@ -146,6 +161,10 @@ fn get_annotation_values_for_id<'a>(obj: &'a Arc<Secret>, id: &'a str) -> Vec<&'
         .annotations()
         .iter()
         .filter(|p| !p.0.starts_with(V1Annotation::ConfigChecksum.key().as_str()))
+        .filter(|p| {
+            !p.0.starts_with(V1Annotation::GeneratedWithChecksum.key().as_str())
+        })
+        .filter(|p| !p.0.starts_with(V1Annotation::GeneratedAt.key().as_str()))
         .filter(|p| p.0.ends_with(format!("-{}", id).as_str()))
         .collect();
     annotations_for_id.iter().map(|p| p.1).collect()
@@ -158,7 +177,7 @@ pub fn has_cron(obj: &Arc<Secret>, id: &str) -> bool {
 
 pub fn length(obj: &Arc<Secret>, id: &str) -> AnnotationResult<usize> {
     let length_v1 = V1Annotation::Length.value(id);
-    return match obj.annotations().get(&length_v1) {
+    match obj.annotations().get(&length_v1) {
         Some(value) => {
             let length = value.parse::<i32>().unwrap() as usize;
             match length > 0 && length <= 100 {
@@ -188,7 +207,7 @@ pub fn length(obj: &Arc<Secret>, id: &str) -> AnnotationResult<usize> {
             },
             None => panic!("No default set for length! Panic!"),
         },
-    };
+    }
 }
 
 fn _annotation_result(
@@ -196,7 +215,7 @@ fn _annotation_result(
     annotation: V1Annotation,
     id: &str,
 ) -> AnnotationResult<String> {
-    return match obj.annotations().get(annotation.value(id).as_str()) {
+    match obj.annotations().get(annotation.value(id).as_str()) {
         Some(value) => AnnotationResult {
             value: value.to_string(),
             default: false,
@@ -207,7 +226,7 @@ fn _annotation_result(
             default: true,
             exists: false,
         },
-    };
+    }
 }
 
 pub fn charset(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
@@ -218,9 +237,12 @@ pub fn pattern(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
     _annotation_result(obj, V1Annotation::Pattern, id)
 }
 
-#[allow(dead_code)]
 pub fn generated_at(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
     _annotation_result(obj, V1Annotation::GeneratedAt, id)
+}
+
+pub fn generated_with_checksum(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
+    _annotation_result(obj, V1Annotation::GeneratedWithChecksum, id)
 }
 
 pub fn renewal_cron(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
@@ -259,7 +281,6 @@ mod tests {
     use k8s_openapi::api::core::v1::Secret;
     use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
     use k8s_openapi::ByteString;
-    use kube::runtime::predicates::annotations;
     use rstest::*;
 
     use std::collections::BTreeMap;
@@ -285,30 +306,21 @@ mod tests {
     #[case("v1.secret.runo.rocks/generated-at-0", "000000000")]
     fn v1_already_generated_is_true(#[case] key: String, #[case] value: String) {
         let secret = build_secret_with_annotations(vec![(key, value)]);
-        assert_eq!(
-            crate::annotations::needs_renewal(&Arc::new(secret), "0"),
-            false
-        );
+        assert!(!crate::annotations::needs_renewal(&Arc::new(secret), "0"));
     }
 
     #[rstest]
     #[case("v1.secret.runo.rocks/renewal-0", "true")]
     fn v1_needs_renewal_is_true(#[case] key: String, #[case] value: String) {
         let secret = build_secret_with_annotations(vec![(key, value)]);
-        assert_eq!(
-            crate::annotations::needs_renewal(&Arc::new(secret), "0"),
-            true
-        );
+        assert!(crate::annotations::needs_renewal(&Arc::new(secret), "0"));
     }
 
     #[rstest]
     #[case("v1.secret.runo.rocks/not-a-valid-annotation", "true")]
     fn v1_no_valid_annotation(#[case] key: String, #[case] value: String) {
         let secret = build_secret_with_annotations(vec![(key, value)]);
-        assert_eq!(
-            crate::annotations::needs_renewal(&Arc::new(secret), "0"),
-            false
-        );
+        assert!(!crate::annotations::needs_renewal(&Arc::new(secret), "0"));
     }
 
     #[rstest]
@@ -317,10 +329,7 @@ mod tests {
     #[case("v1.secret.runo.rocks/renewal-0", "")]
     fn v1_needs_renewal_parse_error(#[case] key: String, #[case] value: String) {
         let secret = build_secret_with_annotations(vec![(key, value)]);
-        assert_eq!(
-            crate::annotations::needs_renewal(&Arc::new(secret), "0"),
-            false
-        );
+        assert!(!crate::annotations::needs_renewal(&Arc::new(secret), "0"));
     }
 
     #[rstest]
@@ -337,10 +346,7 @@ mod tests {
     #[case("v1.secret.runo.rocks/length-0", "1")]
     fn v1_length_returns_default(#[case] key: String, #[case] value: String) {
         let secret = build_secret_with_annotations(vec![(key, value)]);
-        assert_eq!(
-            crate::annotations::length(&Arc::new(secret), "1").is_default(),
-            true
-        );
+        assert!(crate::annotations::length(&Arc::new(secret), "1").is_default());
     }
 
     #[rstest]
@@ -349,10 +355,7 @@ mod tests {
     #[case("v1.secret.runo.rocks/length-0", "101")]
     fn v1_length_invalid(#[case] key: String, #[case] value: String) {
         let secret = build_secret_with_annotations(vec![(key, value)]);
-        assert_eq!(
-            crate::annotations::length(&Arc::new(secret), "0").is_default(),
-            true
-        );
+        assert!(crate::annotations::length(&Arc::new(secret), "0").is_default());
     }
 
     #[rstest]
@@ -369,10 +372,7 @@ mod tests {
     #[case("v1.secret.runo.rocks/charset-0", "")]
     fn v1_charset_returns_default(#[case] key: String, #[case] value: String) {
         let secret = build_secret_with_annotations(vec![(key, value)]);
-        assert_eq!(
-            crate::annotations::charset(&Arc::new(secret), "1").is_default(),
-            true
-        );
+        assert!(crate::annotations::charset(&Arc::new(secret), "1").is_default());
     }
 
     #[rstest]
@@ -389,10 +389,7 @@ mod tests {
     #[case("v1.secret.runo.rocks/pattern-0", "")]
     fn v1_pattern_returns_default(#[case] key: String, #[case] value: String) {
         let secret = build_secret_with_annotations(vec![(key, value)]);
-        assert_eq!(
-            crate::annotations::pattern(&Arc::new(secret), "1").is_default(),
-            true
-        );
+        assert!(crate::annotations::pattern(&Arc::new(secret), "1").is_default());
     }
 
     #[rstest]
@@ -409,26 +406,20 @@ mod tests {
     #[case("v1.secret.runo.rocks/generated-at-0", "")]
     fn v1_generated_at_returns_default(#[case] key: String, #[case] value: String) {
         let secret = build_secret_with_annotations(vec![(key, value)]);
-        assert_eq!(
-            crate::annotations::generated_at(&Arc::new(secret), "1").is_default(),
-            true
-        );
+        assert!(crate::annotations::generated_at(&Arc::new(secret), "1").is_default());
     }
 
     #[rstest]
     #[case("v1.secret.runo.rocks/renewal-cron-0", "true")]
     fn v1_has_cron_is_true(#[case] key: String, #[case] value: String) {
         let secret = build_secret_with_annotations(vec![(key, value)]);
-        assert_eq!(crate::annotations::has_cron(&Arc::new(secret), "0"), true);
+        assert!(crate::annotations::has_cron(&Arc::new(secret), "0"));
     }
 
     #[rstest]
     fn v1_cron_renewal_cron_returns_default() {
         let secret = build_secret_with_annotations(vec![]);
-        assert_eq!(
-            crate::annotations::renewal_cron(&Arc::new(secret), "0").is_default(),
-            true
-        );
+        assert!(crate::annotations::renewal_cron(&Arc::new(secret), "0").is_default());
     }
 
     #[rstest]
@@ -483,10 +474,7 @@ mod tests {
     #[rstest]
     fn v1_force_overwrite_returns_default() {
         let secret = build_secret_with_annotations(vec![]);
-        assert_eq!(
-            crate::annotations::force_overwrite(&Arc::new(secret.clone()), "0").is_default(),
-            true
-        );
+        assert!(crate::annotations::force_overwrite(&Arc::new(secret.clone()), "0").is_default());
         assert_eq!(
             crate::annotations::force_overwrite(&Arc::new(secret), "0").get_value(),
             "false"
@@ -497,10 +485,7 @@ mod tests {
     #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string())])]
     fn needs_generation(#[case] annotations: Vec<(String, String)>) {
         let secret = build_secret_with_annotations(annotations);
-        assert_eq!(
-            crate::annotations::needs_generation(&Arc::new(secret), "0"),
-            true
-        );
+        assert!(crate::annotations::needs_generation(&Arc::new(secret), "0"));
     }
 
     #[rstest]
@@ -508,10 +493,10 @@ mod tests {
     ("v1.secret.runo.rocks/generated-at-0".to_string(), format!("{:?}",SystemTime::now()))])]
     fn needs_no_generation_already_generated(#[case] annotations: Vec<(String, String)>) {
         let secret = build_secret_with_annotations(annotations);
-        assert_eq!(
-            crate::annotations::needs_generation(&Arc::new(secret), "0"),
-            false
-        );
+        assert!(!crate::annotations::needs_generation(
+            &Arc::new(secret),
+            "0"
+        ));
     }
 
     #[rstest]
@@ -524,10 +509,10 @@ mod tests {
             ByteString("already-set".to_string().into_bytes()),
         );
         secret.data = Some(predefined_data);
-        assert_eq!(
-            crate::annotations::needs_generation(&Arc::new(secret), "0"),
-            false
-        );
+        assert!(!crate::annotations::needs_generation(
+            &Arc::new(secret),
+            "0"
+        ));
     }
 
     #[rstest]
@@ -543,9 +528,43 @@ mod tests {
             ByteString("already-set".to_string().into_bytes()),
         );
         secret.data = Some(predefined_data);
-        assert_eq!(
-            crate::annotations::needs_generation(&Arc::new(secret), "0"),
-            true
-        );
+        assert!(crate::annotations::needs_generation(&Arc::new(secret), "0"));
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+    ("v1.secret.runo.rocks/generated-at-0".to_string(), format!("{:?}",SystemTime::now())),
+    ("v1.secret.runo.rocks/generated-with-checksum-0".to_string(), "fghij".to_string()),
+    ("v1.secret.runo.rocks/config-checksum-0".to_string(), "abcde".to_string())])]
+    fn needs_generation_checksum_changed(#[case] annotations: Vec<(String, String)>) {
+        let secret = build_secret_with_annotations(annotations);
+        assert!(crate::annotations::needs_generation(&Arc::new(secret), "0"));
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+    ("v1.secret.runo.rocks/generated-at-0".to_string(), format!("{:?}",SystemTime::now())),
+    ("v1.secret.runo.rocks/generated-with-checksum-0".to_string(), "abcde".to_string()),
+    ("v1.secret.runo.rocks/config-checksum-0".to_string(), "abcde".to_string())])]
+    fn needs_no_generation_checksum_didnt_change(#[case] annotations: Vec<(String, String)>) {
+        let secret = build_secret_with_annotations(annotations);
+        assert!(!crate::annotations::needs_generation(
+            &Arc::new(secret),
+            "0"
+        ));
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+    ("v1.secret.runo.rocks/generated-at-0".to_string(), format!("{:?}",SystemTime::now())),
+    ("v1.secret.runo.rocks/config-checksum-0".to_string(), "abcde".to_string())])]
+    fn needs_no_generation_generated_with_checksum_doesnt_exist(
+        #[case] annotations: Vec<(String, String)>,
+    ) {
+        let secret = build_secret_with_annotations(annotations);
+        assert!(!crate::annotations::needs_generation(
+            &Arc::new(secret),
+            "0"
+        ));
     }
 }
