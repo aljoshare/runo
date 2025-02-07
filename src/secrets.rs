@@ -251,66 +251,59 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_generate_random_string_length() {
-        let key_1 = String::from("v1.secret.runo.rocks/length-0");
-        let value_1 = String::from("1");
-        let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
+    #[rstest]
+    #[case("v1.secret.runo.rocks/length-0", "1", 1)]
+    #[case("v1.secret.runo.rocks/length-0", "10", 10)]
+    fn test_generate_random_string_length(
+        #[case] key: String,
+        #[case] value: String,
+        #[case] count: usize,
+    ) {
+        let secret = build_secret_with_annotations(vec![(key, value)]);
         let result = generate_random_string(&Arc::from(secret), "0").unwrap();
-        debug_assert_eq!(result.chars().count(), 1);
-
-        let key_1 = String::from("v1.secret.runo.rocks/length-0");
-        let value_1 = String::from("10");
-        let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
-        let result = generate_random_string(&Arc::from(secret), "0").unwrap();
-        debug_assert_eq!(result.chars().count(), 10);
+        debug_assert_eq!(result.chars().count(), count);
     }
 
-    #[test]
-    fn test_generate_random_string_charset_match() {
-        let key_1 = String::from("v1.secret.runo.rocks/charset-0");
-        let value_1 = String::from("abcd");
-        let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
+    #[rstest]
+    #[case("v1.secret.runo.rocks/charset-0", "abcd")]
+    fn test_generate_random_string_charset_match(#[case] key: String, #[case] value: String) {
+        let secret = build_secret_with_annotations(vec![(key, value)]);
         let result = generate_random_string(&Arc::from(secret), "0").unwrap();
         let re = Regex::new(r"[abcd]+").unwrap();
         assert!(re.is_match(result.as_str()));
     }
 
-    #[test]
-    fn test_generate_random_string_charset_no_match() {
-        let key_1 = String::from("v1.secret.runo.rocks/charset-0");
-        let value_1 = String::from("abcd");
-        let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
+    #[rstest]
+    #[case("v1.secret.runo.rocks/charset-0", "abcd")]
+    fn test_generate_random_string_charset_no_match(#[case] key: String, #[case] value: String) {
+        let secret = build_secret_with_annotations(vec![(key, value)]);
         let result = generate_random_string(&Arc::from(secret), "0").unwrap();
         let re = Regex::new(r"[e-zA-Z]+").unwrap();
         assert!(!re.is_match(result.as_str()));
     }
 
-    #[test]
-    fn test_generate_random_string_pattern_match() {
-        let key_1 = String::from("v1.secret.runo.rocks/pattern-0");
-        let value_1 = String::from("\\S");
-        let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
+    #[rstest]
+    #[case("v1.secret.runo.rocks/pattern-0", "\\S")]
+    fn test_generate_random_string_pattern_match(#[case] key: String, #[case] value: String) {
+        let secret = build_secret_with_annotations(vec![(key, value)]);
         let result = generate_random_string(&Arc::from(secret), "0").unwrap();
         let re = Regex::new(r"[\S]+").unwrap();
         assert!(re.is_match(result.as_str()));
     }
 
-    #[test]
-    fn test_generate_random_string_pattern_no_match() {
-        let key_1 = String::from("v1.secret.runo.rocks/pattern-0");
-        let value_1 = String::from("\\S");
-        let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
+    #[rstest]
+    #[case("v1.secret.runo.rocks/pattern-0", "\\S")]
+    fn test_generate_random_string_pattern_no_match(#[case] key: String, #[case] value: String) {
+        let secret = build_secret_with_annotations(vec![(key, value)]);
         let result = generate_random_string(&Arc::from(secret), "0").unwrap();
         let re = Regex::new(r"[\s]+").unwrap();
         assert!(!re.is_match(result.as_str()));
     }
 
-    #[test]
-    fn test_generate_random_string_pattern_error() {
-        let key_1 = String::from("v1.secret.runo.rocks/pattern-0");
-        let value_1 = String::from("");
-        let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
+    #[rstest]
+    #[case("v1.secret.runo.rocks/pattern-0", "")]
+    fn test_generate_random_string_pattern_error(#[case] key: String, #[case] value: String) {
+        let secret = build_secret_with_annotations(vec![(key, value)]);
         let result = generate_random_string(&Arc::from(secret), "0");
         assert!(result.is_err())
     }
@@ -326,13 +319,11 @@ mod tests {
         assert!(result.is_err())
     }
 
-    #[test]
-    fn test_update_annotations() {
-        let key_1 = String::from("v1.secret.runo.rocks/generate-0");
-        let value_1 = String::from("username");
-        let key_2 = String::from("v1.secret.runo.rocks/pattern-0");
-        let value_2 = String::from("\\S");
-        let secret = build_secret_with_annotations(vec![(key_1, value_1), (key_2, value_2)]);
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+    ("v1.secret.runo.rocks/pattern-0".to_string(), "\\S".to_string())])]
+    fn test_update_annotations(#[case] annotations: Vec<(String, String)>) {
+        let secret = build_secret_with_annotations(annotations);
         let start: DateTime<Utc> = SystemTime::now().into();
         let annotations = update_annotations(&Arc::from(secret)).unwrap();
         let end: DateTime<Utc> = SystemTime::now().into();
@@ -349,13 +340,11 @@ mod tests {
         assert!(before_or_equal_end);
     }
 
-    #[test]
-    fn test_update_annotations_needs_renewal() {
-        let key_1 = String::from("v1.secret.runo.rocks/generate-0");
-        let value_1 = String::from("username");
-        let key_2 = String::from("v1.secret.runo.rocks/renewal-0");
-        let value_2 = String::from("true");
-        let secret = build_secret_with_annotations(vec![(key_1, value_1), (key_2, value_2)]);
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+    ("v1.secret.runo.rocks/renewal-0".to_string(), "true".to_string())])]
+    fn test_update_annotations_needs_renewal(#[case] annotations: Vec<(String, String)>) {
+        let secret = build_secret_with_annotations(annotations);
         let annotations = update_annotations(&Arc::from(secret)).unwrap();
         assert!(annotations.contains_key("v1.secret.runo.rocks/renewal-0"));
         let needs_renewal: bool = annotations
@@ -366,11 +355,10 @@ mod tests {
         assert!(!needs_renewal);
     }
 
-    #[test]
-    fn test_update_annotations_no_need_for_renewal() {
-        let key_1 = String::from("v1.secret.runo.rocks/renewal-0");
-        let value_1 = String::from("false");
-        let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
+    #[rstest]
+    #[case("v1.secret.runo.rocks/renewal-0", "false")]
+    fn test_update_annotations_no_need_for_renewal(#[case] key: String, #[case] value: String) {
+        let secret = build_secret_with_annotations(vec![(key, value)]);
         let annotations = update_annotations(&Arc::from(secret)).unwrap();
         assert!(annotations.contains_key("v1.secret.runo.rocks/renewal-0"));
         let needs_renewal: bool = annotations
@@ -381,20 +369,18 @@ mod tests {
         assert!(!needs_renewal);
     }
 
-    #[test]
-    fn test_update_data() {
-        let key_1 = String::from("v1.secret.runo.rocks/generate-0");
-        let value_1 = String::from("username");
-        let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
+    #[rstest]
+    #[case("v1.secret.runo.rocks/generate-0", "username")]
+    fn test_update_data(#[case] key: String, #[case] value: String) {
+        let secret = build_secret_with_annotations(vec![(key, value)]);
         let data = update_data(&Arc::from(secret)).unwrap();
         assert!(data.contains_key("username"));
     }
 
-    #[test]
-    fn test_update_annotations_creates_config_checksum() {
-        let key_1 = String::from("v1.secret.runo.rocks/generate-0");
-        let value_1 = String::from("username");
-        let secret = build_secret_with_annotations(vec![(key_1, value_1)]);
+    #[rstest]
+    #[case("v1.secret.runo.rocks/generate-0", "username")]
+    fn test_update_annotations_creates_config_checksum(#[case] key: String, #[case] value: String) {
+        let secret = build_secret_with_annotations(vec![(key, value)]);
         let annotations = update_annotations(&Arc::from(secret.clone())).unwrap();
         assert!(annotations.contains_key("v1.secret.runo.rocks/config-checksum-0"));
         let checksum = annotations
