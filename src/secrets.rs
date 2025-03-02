@@ -48,11 +48,11 @@ pub fn generate_random_string(
 }
 
 fn generate_random_string_from_charset(length: usize, charset: &str) -> String {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let charset_b = charset.as_bytes();
     let random_string: String = (0..length)
         .map(|_| {
-            let index = rng.gen_range(0..charset.len());
+            let index = rng.random_range(0..charset.len());
             charset_b[index] as char
         })
         .collect();
@@ -75,7 +75,7 @@ fn generate_random_string_from_pattern(
     length: usize,
     pattern: &str,
 ) -> Result<String, CantCreateStringFromRegex> {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let pattern_with_length = format!("{:}{{ {:},{:} }}", pattern, length, length);
     debug!("Create random string for pattern {:?}", pattern_with_length);
     let gen = rand_regex::Regex::compile(pattern_with_length.as_str(), length.try_into().unwrap());
