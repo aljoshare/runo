@@ -1,5 +1,43 @@
 # Changelog
 
+### [v0.2.16](https://github.com/aljoshare/runo/compare/v0.2.15...v0.2.16) (2025-03-02)
+
+#### Features
+
+* **secrets:** support regeneration of secrets after reconfiguration
+([2e46778](https://github.com/aljoshare/runo/commit/2e46778c9cee3837444220aa1421b8f9656ae7c3))
+* **secrets:** improve error handling
+([6cd160b](https://github.com/aljoshare/runo/commit/6cd160b48cde84b4eb557b42894cf50f1df68fc3))
+* **secrets:** check if pattern is valid
+([44d20c4](https://github.com/aljoshare/runo/commit/44d20c4cd45e8e2360c68b828e804e0cc978ed53))
+* **errors:** add error for invalid regex pattern
+([79146af](https://github.com/aljoshare/runo/commit/79146af3d5e3d16bfb50315409a0435eb20d39a1))
+
+#### Fixes
+
+* **secrets:** replace deprecated methods
+([ba305bb](https://github.com/aljoshare/runo/commit/ba305bb97a96870bcdddb7a49e90e2aba51a749f))
+* **deps:** bump rand to 0.9.0 and rand_regex to 0.18.0
+([82900f3](https://github.com/aljoshare/runo/commit/82900f3ac46ebc5a839c60f7d802ebc80991b38b))
+* **deps:** bump serde from 1.0.217 to 1.0.218
+([f55a6bc](https://github.com/aljoshare/runo/commit/f55a6bc54d42a2d63cffa9f0d66b4b2e6abe7ff1))
+* **deps:** bump anyhow from 1.0.95 to 1.0.96
+([a6bf3d4](https://github.com/aljoshare/runo/commit/a6bf3d400cef6bd0d8b50c22936e89ff67edf0f2))
+* **deps:** bump clap from 4.5.28 to 4.5.31
+([d42e224](https://github.com/aljoshare/runo/commit/d42e2240f514672a23e8d702b103faf6cc39bd29))
+* **deps:** bump clap from 4.5.26 to 4.5.28
+([8aa3e82](https://github.com/aljoshare/runo/commit/8aa3e82e35682544b403774f42adf003d947ee79))
+* **deps:** bump serde from 1.0.216 to 1.0.217
+([41ff05c](https://github.com/aljoshare/runo/commit/41ff05c4480b68fe0d5a66e524b71f1a4927dddd))
+* **deps:** bump cron from 0.13.0 to 0.15.0
+([82ef096](https://github.com/aljoshare/runo/commit/82ef0965c2620153a869f38b0f0a40d05c2ad3cb))
+* **deps:** bump rstest from 0.23.0 to 0.24.0
+([e9cb48c](https://github.com/aljoshare/runo/commit/e9cb48c23413a5c3ab568a77214bee2cd796f520))
+* **deps:** bump tokio from 1.42.0 to 1.43.0
+([2f8bc75](https://github.com/aljoshare/runo/commit/2f8bc755aae135e6cce068a5b400cc419976d4cb))
+* **annotations:** improve output during evaluation
+([b0cb8eb](https://github.com/aljoshare/runo/commit/b0cb8eb1104fae7b2e6603ccb8d6a7e231880c65))
+
 ### [v0.2.15](https://github.com/aljoshare/runo/compare/v0.2.14...v0.2.15) (2025-02-05)
 
 #### Features
