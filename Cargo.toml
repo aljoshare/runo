@@ -16,7 +16,7 @@ k8s-openapi = { version = "0.24.0", features = ["v1_28"] }
 futures = "0.3.31"
 futures-util = "0.3.28"
 thiserror = "2.0.12"
-rand = "0.9.0"
+rand = "0.9.1"
 regex = "1.11.1"
 rand_regex = "0.18.0"
 cron = "0.15.0"
