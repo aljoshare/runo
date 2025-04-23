@@ -1,5 +1,36 @@
 # Changelog
 
+### [v0.2.17](https://github.com/aljoshare/runo/compare/v0.2.16...v0.2.17) (2025-04-23)
+
+#### Fixes
+
+* **deps:** bump serde from 1.0.218 to 1.0.219
+([999de0d](https://github.com/aljoshare/runo/commit/999de0d023276ced5687c99da2359dc3a98516b0))
+* **deps:** bump assert_cmd from 2.0.16 to 2.0.17
+([ac2433d](https://github.com/aljoshare/runo/commit/ac2433da62882020358d0953679f77e17129090a))
+* **deps:** bump actix-web from 4.9.0 to 4.10.2
+([8fe623c](https://github.com/aljoshare/runo/commit/8fe623c651836536fc8d227dbb1314036de18e62))
+* **deps:** bump clap from 4.5.31 to 4.5.37
+([87cbdcf](https://github.com/aljoshare/runo/commit/87cbdcf25596b45a1d6e3b5a12d7003711ba7cca))
+* **deps:** bump rand from 0.9.0 to 0.9.1
+([b808720](https://github.com/aljoshare/runo/commit/b808720ff4fe8ef91a16de9c178d864d8bac4903))
+* **deps:** bump kube from 0.98.0 to 0.99.0
+([f619469](https://github.com/aljoshare/runo/commit/f61946974267edf69f90f63df2cc795112b84037))
+* **deps:** bump ring from 0.17.8 to 0.17.13
+([d76be78](https://github.com/aljoshare/runo/commit/d76be78a883005c8b239fd223fdd14237011e5a6))
+* **deps:** bump chrono from 0.4.39 to 0.4.40
+([617fd64](https://github.com/aljoshare/runo/commit/617fd643fd90d73c9d8b976716075a41fbc1bf6b))
+* **deps:** bump thiserror from 2.0.11 to 2.0.12
+([277208e](https://github.com/aljoshare/runo/commit/277208e7df378012a9a11f1dcfe0f9aa8ed65c31))
+* **deps:** bump anyhow from 1.0.96 to 1.0.98
+([7ca9758](https://github.com/aljoshare/runo/commit/7ca9758759edfa5bb78ee13069f49f0e723dbead))
+* **deps:** bump tokio from 1.43.0 to 1.44.2
+([1002041](https://github.com/aljoshare/runo/commit/1002041cd98e576c3fdc6d0885eabde713d64d52))
+* **deps:** bump time from 0.3.37 to 0.3.40
+([5d5b5d8](https://github.com/aljoshare/runo/commit/5d5b5d892fd16e628f38ff31b4f6ed8c4ce214ab))
+* **deps:** bump rstest from 0.24.0 to 0.25.0
+([9fbb87f](https://github.com/aljoshare/runo/commit/9fbb87f0d959ac63fb769be49d433d75d73cb415))
+
 ### [v0.2.16](https://github.com/aljoshare/runo/compare/v0.2.15...v0.2.16) (2025-03-02)
 
 #### Features
