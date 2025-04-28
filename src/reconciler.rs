@@ -657,6 +657,53 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn integration_reconcile_should_clone_secret() {
+        let secret_name = "runo-generate-test-clone";
+        let config = Config::from_kubeconfig(&get_kubeconfig_options())
+            .await
+            .unwrap();
+        let client = Client::try_from(config).unwrap();
+
+        let k8s = K8s::build(false);
+        let runo_config = Arc::new(RunoConfig::build(k8s, 300));
+
+        let key_1 = String::from("v1.secret.runo.rocks/generate-0");
+        let value_1 = String::from("username");
+
+        let key_2 = String::from("v1.secret.runo.rocks/generate-1");
+        let value_2 = String::from("username-cloned");
+
+        let key_3 = String::from("v1.secret.runo.rocks/clone-from-1");
+        let value_3 = String::from("0");
+
+        let post_params = build_post_params();
+        let secret = build_managed_secret_with_annotations(
+            secret_name.to_string(),
+            vec![(key_1, value_1), (key_2, value_2), (key_3, value_3)],
+        );
+        let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        secrets.create(&post_params, &secret).await.unwrap();
+
+        // Data should be empty
+        assert!(secrets.get(secret_name).await.unwrap().data.is_none());
+
+        // reconcile it
+        reconcile(Arc::new(secret), runo_config).await.unwrap();
+
+        // Value for field username should be generated and cloned
+        let secret = secrets.get(secret_name).await.unwrap().data.unwrap();
+        let username = from_utf8(&secret.get("username").unwrap().0).unwrap();
+        let username_cloned = from_utf8(&secret.get("username-cloned").unwrap().0).unwrap();
+
+        assert_eq!(username, username_cloned);
+
+        secrets
+            .delete(secret_name, &DeleteParams::default())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
     async fn integration_reconcile_should_generate_secret_with_renewal() {
         let secret_name = "runo-generate-test-renewal";
         let config = Config::from_kubeconfig(&get_kubeconfig_options())
