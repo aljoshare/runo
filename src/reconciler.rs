@@ -657,6 +657,170 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn integration_reconcile_should_clone_secret() {
+        let secret_name = "runo-generate-test-clone";
+        let config = Config::from_kubeconfig(&get_kubeconfig_options())
+            .await
+            .unwrap();
+        let client = Client::try_from(config).unwrap();
+
+        let k8s = K8s::build(false);
+        let runo_config = Arc::new(RunoConfig::build(k8s, 300));
+
+        let key_1 = String::from("v1.secret.runo.rocks/generate-0");
+        let value_1 = String::from("username");
+
+        let key_2 = String::from("v1.secret.runo.rocks/generate-1");
+        let value_2 = String::from("username-cloned");
+
+        let key_3 = String::from("v1.secret.runo.rocks/clone-from-1");
+        let value_3 = String::from("0");
+
+        let post_params = build_post_params();
+        let secret = build_managed_secret_with_annotations(
+            secret_name.to_string(),
+            vec![(key_1, value_1), (key_2, value_2), (key_3, value_3)],
+        );
+        let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        secrets.create(&post_params, &secret).await.unwrap();
+
+        // Data should be empty
+        assert!(secrets.get(secret_name).await.unwrap().data.is_none());
+
+        // reconcile it
+        reconcile(Arc::new(secret), runo_config).await.unwrap();
+
+        // Value for field username should be generated and cloned
+        let secret = secrets.get(secret_name).await.unwrap().data.unwrap();
+        let username = from_utf8(&secret.get("username").unwrap().0).unwrap();
+        let username_cloned = from_utf8(&secret.get("username-cloned").unwrap().0).unwrap();
+
+        assert_eq!(username, username_cloned);
+
+        secrets
+            .delete(secret_name, &DeleteParams::default())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn integration_reconcile_should_sync_secret_when_changed() {
+        let secret_name = "runo-generate-test-sync-changed";
+        let config = Config::from_kubeconfig(&get_kubeconfig_options())
+            .await
+            .unwrap();
+        let client = Client::try_from(config).unwrap();
+
+        let k8s = K8s::build(false);
+        let runo_config = Arc::new(RunoConfig::build(k8s, 300));
+
+        let key_1 = String::from("v1.secret.runo.rocks/generate-0");
+        let value_1 = String::from("username");
+
+        let key_2 = String::from("v1.secret.runo.rocks/length-0");
+        let value_2 = String::from("8");
+
+        let key_3 = String::from("v1.secret.runo.rocks/generate-1");
+        let value_3 = String::from("username-cloned");
+
+        let key_4 = String::from("v1.secret.runo.rocks/clone-from-1");
+        let value_4 = String::from("0");
+
+        let patch_params = build_patch_params();
+        let post_params = build_post_params();
+
+        let secret = build_managed_secret_with_annotations(
+            secret_name.to_string(),
+            vec![
+                (key_1, value_1),
+                (key_2, value_2),
+                (key_3, value_3),
+                (key_4, value_4),
+            ],
+        );
+        let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        secrets.create(&post_params, &secret).await.unwrap();
+
+        // Data should be empty
+        assert!(secrets.get(secret_name).await.unwrap().data.is_none());
+
+        // reconcile it
+        reconcile(Arc::new(secret), runo_config.clone())
+            .await
+            .unwrap();
+
+        // Value for field username should be generated and cloned
+        let secret = secrets.get(secret_name).await.unwrap().data.unwrap();
+        let username = from_utf8(&secret.get("username").unwrap().0).unwrap();
+        let username_cloned = from_utf8(&secret.get("username-cloned").unwrap().0).unwrap();
+
+        assert_eq!(username, username_cloned);
+
+        // Change length of the source
+        let key_replace = String::from("v1.secret.runo.rocks/length-0");
+        let value_replace = String::from("20");
+
+        let mut reconfigured_annotations = BTreeMap::new();
+        reconfigured_annotations.insert(key_replace, value_replace);
+        let reconfigured_metadata = ObjectMeta {
+            annotations: Some(reconfigured_annotations),
+            ..Default::default()
+        }
+        .into_request_partial::<Secret>();
+        let _ = secrets
+            .patch_metadata(
+                secret_name,
+                &patch_params,
+                &Patch::Apply(&reconfigured_metadata),
+            )
+            .await
+            .unwrap();
+
+        // Annotation should be changed
+        assert_eq!(
+            secrets
+                .get(secret_name)
+                .await
+                .unwrap()
+                .annotations()
+                .get("v1.secret.runo.rocks/length-0")
+                .unwrap(),
+            "20"
+        );
+
+        // reconcile it to update the checksums
+        reconcile(
+            Arc::new(secrets.get(secret_name).await.unwrap()),
+            runo_config.clone(),
+        )
+        .await
+        .unwrap();
+
+        // reconcile it again to update the data
+        reconcile(
+            Arc::new(secrets.get(secret_name).await.unwrap()),
+            runo_config.clone(),
+        )
+        .await
+        .unwrap();
+
+        // Value for field username should be generated and has length of 20 after reconfiguration
+        let secret_data = secrets.get(secret_name).await.unwrap().data.unwrap();
+        let username = from_utf8(&secret_data.get("username").unwrap().0).unwrap();
+        assert_eq!(username.chars().count(), 20);
+
+        // Cloned field should be synced
+        let username_cloned = from_utf8(&secret_data.get("username-cloned").unwrap().0).unwrap();
+        assert_eq!(username_cloned.chars().count(), 20);
+
+        // Cleanup
+        secrets
+            .delete(secret_name, &DeleteParams::default())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
     async fn integration_reconcile_should_generate_secret_with_renewal() {
         let secret_name = "runo-generate-test-renewal";
         let config = Config::from_kubeconfig(&get_kubeconfig_options())
