@@ -500,6 +500,16 @@ mod tests {
     }
 
     #[rstest]
+    #[case("v1.secret.runo.rocks/clone-from-1", "0")]
+    fn v1_clone_from(#[case] key: String, #[case] value: String) {
+        let secret = build_secret_with_annotations(vec![(key, value.to_string())]);
+        assert_eq!(
+            crate::annotations::clone_from(&Arc::new(secret), "1").get_value(),
+            value.to_string()
+        );
+    }
+
+    #[rstest]
     #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string())])]
     fn needs_generation(#[case] annotations: Vec<(String, String)>) {
         let secret = build_secret_with_annotations(annotations);
@@ -583,6 +593,18 @@ mod tests {
         assert!(!crate::annotations::needs_generation(
             &Arc::new(secret),
             "0"
+        ));
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+    ("v1.secret.runo.rocks/generate-1".to_string(), "username-cloned".to_string()),
+    ("v1.secret.runo.rocks/clone-from-1".to_string(), "0".to_string())])]
+    fn needs_no_generation_clone_from(#[case] annotations: Vec<(String, String)>) {
+        let secret = build_secret_with_annotations(annotations);
+        assert!(!crate::annotations::needs_generation(
+            &Arc::new(secret),
+            "1"
         ));
     }
 }
