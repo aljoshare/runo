@@ -15,6 +15,7 @@ pub enum V1Annotation {
     RenewalCron,
     ConfigChecksum,
     ForceOverwrite,
+    CloneFrom,
 }
 
 impl V1Annotation {
@@ -32,6 +33,7 @@ impl V1Annotation {
             V1Annotation::RenewalCron => "v1.secret.runo.rocks/renewal-cron".to_string(),
             V1Annotation::ConfigChecksum => "v1.secret.runo.rocks/config-checksum".to_string(),
             V1Annotation::ForceOverwrite => "v1.secret.runo.rocks/force-overwrite".to_string(),
+            V1Annotation::CloneFrom => "v1.secret.runo.rocks/clone-from".to_string(),
         }
     }
     pub fn value(&self, id: &str) -> String {
@@ -52,6 +54,9 @@ impl V1Annotation {
             V1Annotation::ForceOverwrite => {
                 format!("{}-{}", V1Annotation::ForceOverwrite.key(), id)
             }
+            V1Annotation::CloneFrom => {
+                format!("{}-{}", V1Annotation::CloneFrom.key(), id)
+            }
         }
     }
     fn default(&self) -> Option<String> {
@@ -68,6 +73,7 @@ impl V1Annotation {
             V1Annotation::RenewalCron => None,
             V1Annotation::ConfigChecksum => None,
             V1Annotation::ForceOverwrite => Some("false".to_string()),
+            V1Annotation::CloneFrom => None,
         }
     }
 }
@@ -105,8 +111,16 @@ fn should_force_overwrite(obj: &Arc<Secret>, id: &str) -> bool {
     force_overwrite(obj, id).get_value() == "true"
 }
 
+pub fn needs_clone(obj: &Arc<Secret>, id: &str) -> bool {
+    clone_from(obj, id).exists()
+}
+
 pub fn needs_generation(obj: &Arc<Secret>, id: &str) -> bool {
     if generate(obj, id).exists() {
+        if needs_clone(obj, id) {
+            debug!("Skip generation since field should be cloned");
+            return false;
+        }
         if generated_at(obj, id).exists() {
             let checksum = checksum(obj, id);
             let generated_with_checksum = generated_with_checksum(obj, id);
@@ -255,6 +269,10 @@ pub fn generate(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
 
 pub fn force_overwrite(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
     _annotation_result(obj, V1Annotation::ForceOverwrite, id)
+}
+
+pub fn clone_from(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
+    _annotation_result(obj, V1Annotation::CloneFrom, id)
 }
 
 pub fn id_iter(obj: &Arc<Secret>) -> Vec<String> {
