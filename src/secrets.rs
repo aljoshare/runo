@@ -268,11 +268,14 @@ mod tests {
     use k8s_openapi::api::core::v1::Secret;
     use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
 
+    use k8s_openapi::ByteString;
     use regex::Regex;
     use rstest::rstest;
     use std::collections::BTreeMap;
     use std::sync::Arc;
     use std::time::SystemTime;
+
+    use super::clone_data_field;
 
     fn build_secret_with_annotations(annotations: Vec<(String, String)>) -> Secret {
         let annotation_map = annotations
@@ -423,5 +426,31 @@ mod tests {
             .get("v1.secret.runo.rocks/config-checksum-0")
             .unwrap();
         assert_eq!(*checksum, create_checksum(&Arc::from(secret), "0"));
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+    ("v1.secret.runo.rocks/generate-1".to_string(), "username-cloned".to_string()),
+    ("v1.secret.runo.rocks/clone-from-1".to_string(), "0".to_string())])]
+    fn test_clone_data_field(#[case] annotations: Vec<(String, String)>) {
+        let mut secret = build_secret_with_annotations(annotations);
+        let mut secret_data = BTreeMap::new();
+        secret_data.insert(
+            "username".to_string(),
+            ByteString("clone-me".as_bytes().to_vec()),
+        );
+        let _ = secret.data.insert(secret_data);
+        assert!(secret.data.clone().unwrap().contains_key("username"));
+        assert!(!secret.data.clone().unwrap().contains_key("username-cloned"));
+        let result = clone_data_field(
+            secret.data.clone().unwrap(),
+            &Arc::from(secret.clone()),
+            "1",
+        );
+        assert!(result.clone().unwrap().contains_key("username-cloned"));
+        assert_eq!(
+            result.unwrap().get("username-cloned").unwrap().0,
+            "clone-me".as_bytes().to_vec()
+        );
     }
 }
