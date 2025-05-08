@@ -1,6 +1,6 @@
 use crate::annotations::{
-    charset, create_checksum, generated_with_checksum, id_iter, length, needs_generation,
-    needs_renewal, pattern,
+    charset, create_checksum, generate, generated_with_checksum, id_iter, length, needs_clone,
+    needs_generation, needs_renewal, pattern,
 };
 use chrono::{DateTime, Utc};
 use k8s_openapi::api::core::v1::Secret;
@@ -163,6 +163,10 @@ fn update_data(obj: &Arc<Secret>) -> Result<BTreeMap<String, ByteString>, DataUp
             debug!("{:?} for id {:?} needs to be renewed", obj.name_any(), id);
             data = update_data_field(data, obj, &id)?;
         }
+        if needs_clone(obj, id.as_str()) {
+            debug!("{:?} for id {:?} needs to get cloned", obj.name_any(), id);
+            data = clone_data_field(data, obj, &id)?;
+        }
     }
     Ok(data)
 }
@@ -191,6 +195,50 @@ fn update_data_field(
             Err(DataUpdateError)
         }
     }
+}
+
+fn should_clone_already_cloned_field(obj: &Arc<Secret>, clone_from_id: &str) -> bool {
+    let maybe_clone_from = annotations::clone_from(obj, clone_from_id);
+    maybe_clone_from.exists()
+}
+
+fn clone_data_field(
+    mut secret_data: BTreeMap<String, ByteString>,
+    obj: &Arc<Secret>,
+    id: &str,
+) -> Result<BTreeMap<String, ByteString>, DataUpdateError> {
+    let maybe_generate = annotations::generate(obj, id);
+    let maybe_clone_from = annotations::clone_from(obj, id);
+    let clone_from_id = maybe_clone_from.get_value();
+    let clone_from_field_name = generate(obj, &clone_from_id);
+    if !clone_from_field_name.exists() {
+        error!(
+            "Can't clone field! No annotation for field with id {:?}",
+            clone_from_id
+        );
+        return Err(DataUpdateError);
+    }
+    let clone_from_field_name_value = clone_from_field_name.get_value();
+    if should_clone_already_cloned_field(obj, &clone_from_id) {
+        error!(
+            "It's not allowed to clone an already cloned field: {:?}",
+            clone_from_id
+        );
+        return Err(DataUpdateError);
+    }
+    let clone_from_field_value = secret_data.get(&clone_from_field_name_value);
+    if clone_from_field_value.is_none() {
+        error!(
+            "Can't clone field! Data field for annotation with with id {:?} is empty",
+            clone_from_id
+        );
+        return Err(DataUpdateError);
+    };
+    secret_data.insert(
+        maybe_generate.get_value().to_string(),
+        clone_from_field_value.unwrap().clone(),
+    );
+    Ok(secret_data)
 }
 
 fn get_updated_secret(obj: &Arc<Secret>) -> Result<Secret, SecretUpdateError> {
