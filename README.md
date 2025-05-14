@@ -144,6 +144,24 @@ data:
 ```
 Annotation to enforce that runo overwrites a field which is already set, e.g. if you have an existing secret which should be managed afterwards by runo and you want to regenerate a single field. By default, runo ignores fields which are already set.
 
+v1.secret.runo.rocks/clone-from
+----
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: example-secret
+  labels:
+    v1.secret.runo.rocks/managed: "true"
+  annotations:
+    v1.secret.runo.rocks/generate-${ID1}: ${FIELD_NAME_1} # Example: password
+    v1.secret.runo.rocks/generate-${ID2}: ${FIELD_NAME_2} # Example: password-cloned
+    v1.secret.runo.rocks/clone-from-${ID2}: ${ID1}
+type: Opaque
+data:
+```
+Annotation to instruct runo to clone the value of a generated field to another field in the same secret but with a different name. For example, if you would like to generate a secret for an application where you need the same value multiple times but with different identifiers.
+
 ## Deployment
 
 Please deploy rūnō via the [available Helm chart](https://github.com/AljoschaP/runo-helm-chart).
