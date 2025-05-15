@@ -1,6 +1,6 @@
 use crate::annotations::{
-    charset, create_checksum, generated_with_checksum, id_iter, length, needs_generation,
-    needs_renewal, pattern,
+    charset, create_checksum, generate, generated_with_checksum, id_iter, length, needs_clone,
+    needs_generation, needs_renewal, pattern,
 };
 use chrono::{DateTime, Utc};
 use k8s_openapi::api::core::v1::Secret;
@@ -163,6 +163,10 @@ fn update_data(obj: &Arc<Secret>) -> Result<BTreeMap<String, ByteString>, DataUp
             debug!("{:?} for id {:?} needs to be renewed", obj.name_any(), id);
             data = update_data_field(data, obj, &id)?;
         }
+        if needs_clone(obj, id.as_str()) {
+            debug!("{:?} for id {:?} needs to get cloned", obj.name_any(), id);
+            data = clone_data_field(data, obj, &id)?;
+        }
     }
     Ok(data)
 }
@@ -191,6 +195,50 @@ fn update_data_field(
             Err(DataUpdateError)
         }
     }
+}
+
+fn should_clone_already_cloned_field(obj: &Arc<Secret>, clone_from_id: &str) -> bool {
+    let maybe_clone_from = annotations::clone_from(obj, clone_from_id);
+    maybe_clone_from.exists()
+}
+
+fn clone_data_field(
+    mut secret_data: BTreeMap<String, ByteString>,
+    obj: &Arc<Secret>,
+    id: &str,
+) -> Result<BTreeMap<String, ByteString>, DataUpdateError> {
+    let maybe_generate = annotations::generate(obj, id);
+    let maybe_clone_from = annotations::clone_from(obj, id);
+    let clone_from_id = maybe_clone_from.get_value();
+    let clone_from_field_name = generate(obj, &clone_from_id);
+    if !clone_from_field_name.exists() {
+        error!(
+            "Can't clone field! No annotation for field with id {:?}",
+            clone_from_id
+        );
+        return Err(DataUpdateError);
+    }
+    let clone_from_field_name_value = clone_from_field_name.get_value();
+    if should_clone_already_cloned_field(obj, &clone_from_id) {
+        error!(
+            "It's not allowed to clone an already cloned field: {:?}",
+            clone_from_id
+        );
+        return Err(DataUpdateError);
+    }
+    let clone_from_field_value = secret_data.get(&clone_from_field_name_value);
+    if clone_from_field_value.is_none() {
+        error!(
+            "Can't clone field! Data field for annotation with with id {:?} is empty",
+            clone_from_id
+        );
+        return Err(DataUpdateError);
+    };
+    secret_data.insert(
+        maybe_generate.get_value().to_string(),
+        clone_from_field_value.unwrap().clone(),
+    );
+    Ok(secret_data)
 }
 
 fn get_updated_secret(obj: &Arc<Secret>) -> Result<Secret, SecretUpdateError> {
@@ -232,11 +280,14 @@ mod tests {
     use k8s_openapi::api::core::v1::Secret;
     use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
 
+    use k8s_openapi::ByteString;
     use regex::Regex;
     use rstest::rstest;
     use std::collections::BTreeMap;
     use std::sync::Arc;
     use std::time::SystemTime;
+
+    use super::clone_data_field;
 
     fn build_secret_with_annotations(annotations: Vec<(String, String)>) -> Secret {
         let annotation_map = annotations
@@ -387,5 +438,105 @@ mod tests {
             .get("v1.secret.runo.rocks/config-checksum-0")
             .unwrap();
         assert_eq!(*checksum, create_checksum(&Arc::from(secret), "0"));
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+    ("v1.secret.runo.rocks/generate-1".to_string(), "username-cloned".to_string()),
+    ("v1.secret.runo.rocks/clone-from-1".to_string(), "0".to_string())])]
+    fn test_clone_data_field(#[case] annotations: Vec<(String, String)>) {
+        let mut secret = build_secret_with_annotations(annotations);
+        let mut secret_data = BTreeMap::new();
+        secret_data.insert(
+            "username".to_string(),
+            ByteString("clone-me".as_bytes().to_vec()),
+        );
+        let _ = secret.data.insert(secret_data);
+        assert!(secret.data.clone().unwrap().contains_key("username"));
+        assert!(!secret.data.clone().unwrap().contains_key("username-cloned"));
+        let result = clone_data_field(
+            secret.data.clone().unwrap(),
+            &Arc::from(secret.clone()),
+            "1",
+        );
+        assert!(result.clone().unwrap().contains_key("username-cloned"));
+        assert_eq!(
+            result.unwrap().get("username-cloned").unwrap().0,
+            "clone-me".as_bytes().to_vec()
+        );
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+    ("v1.secret.runo.rocks/generate-1".to_string(), "username-cloned-1".to_string()),
+    ("v1.secret.runo.rocks/clone-from-1".to_string(), "0".to_string()),
+    ("v1.secret.runo.rocks/generate-2".to_string(), "username-cloned-2".to_string()),
+    ("v1.secret.runo.rocks/clone-from-2".to_string(), "0".to_string())])]
+    fn test_clone_multiple_data_fields(#[case] annotations: Vec<(String, String)>) {
+        let mut secret = build_secret_with_annotations(annotations);
+        let mut secret_data = BTreeMap::new();
+        secret_data.insert(
+            "username".to_string(),
+            ByteString("clone-me".as_bytes().to_vec()),
+        );
+        let _ = secret.data.insert(secret_data);
+        assert!(secret.data.clone().unwrap().contains_key("username"));
+        assert!(!secret.data.clone().unwrap().contains_key("username-cloned"));
+        let result = clone_data_field(
+            secret.data.clone().unwrap(),
+            &Arc::from(secret.clone()),
+            "1",
+        );
+        assert!(result.clone().unwrap().contains_key("username-cloned-1"));
+        assert_eq!(
+            result.unwrap().get("username-cloned-1").unwrap().0,
+            "clone-me".as_bytes().to_vec()
+        );
+
+        let result = clone_data_field(
+            secret.data.clone().unwrap(),
+            &Arc::from(secret.clone()),
+            "2",
+        );
+        assert!(result.clone().unwrap().contains_key("username-cloned-2"));
+        assert_eq!(
+            result.unwrap().get("username-cloned-2").unwrap().0,
+            "clone-me".as_bytes().to_vec()
+        );
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+    ("v1.secret.runo.rocks/generate-1".to_string(), "username-cloned-1".to_string()),
+    ("v1.secret.runo.rocks/clone-from-1".to_string(), "0".to_string()),
+    ("v1.secret.runo.rocks/generate-2".to_string(), "username-cloned-2".to_string()),
+    ("v1.secret.runo.rocks/clone-from-2".to_string(), "1".to_string())])]
+    fn test_dont_clone_chained_data_fields(#[case] annotations: Vec<(String, String)>) {
+        let mut secret = build_secret_with_annotations(annotations);
+        let mut secret_data = BTreeMap::new();
+        secret_data.insert(
+            "username".to_string(),
+            ByteString("clone-me".as_bytes().to_vec()),
+        );
+        let _ = secret.data.insert(secret_data);
+        assert!(secret.data.clone().unwrap().contains_key("username"));
+        assert!(!secret.data.clone().unwrap().contains_key("username-cloned"));
+        let result = clone_data_field(
+            secret.data.clone().unwrap(),
+            &Arc::from(secret.clone()),
+            "1",
+        );
+        assert!(result.clone().unwrap().contains_key("username-cloned-1"));
+        assert_eq!(
+            result.unwrap().get("username-cloned-1").unwrap().0,
+            "clone-me".as_bytes().to_vec()
+        );
+
+        let result = clone_data_field(
+            secret.data.clone().unwrap(),
+            &Arc::from(secret.clone()),
+            "2",
+        );
+        assert!(result.is_err());
     }
 }
