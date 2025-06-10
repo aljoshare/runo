@@ -1,5 +1,37 @@
 # Changelog
 
+### [v0.2.18](https://github.com/aljoshare/runo/compare/v0.2.17...v0.2.18) (2025-06-10)
+
+#### Features
+
+* **secrets:** support clone-from
+([e5099a8](https://github.com/aljoshare/runo/commit/e5099a8a90ab77f5fa277001b850651613e36137))
+* **annotations:** support clone-from
+([d6228e8](https://github.com/aljoshare/runo/commit/d6228e8a586a676c0ce67c4a2f886ee140eb89c6))
+
+#### Fixes
+
+* **deps:** bump tokio from 1.45.0 to 1.45.1
+([88b2aad](https://github.com/aljoshare/runo/commit/88b2aadea46d30c4d68bcf7e286d18b6308ec9a1))
+* **deps:** bump clap from 4.5.39 to 4.5.40
+([a7f57cb](https://github.com/aljoshare/runo/commit/a7f57cbce8709e7d40e55124c97c51b4f9f0ee37))
+* **deps:** bump rand_regex from 0.18.0 to 0.18.1
+([04ff48a](https://github.com/aljoshare/runo/commit/04ff48a5bf60007f934b07cbeb4ae1e56aafd1a3))
+* **deps:** bump actix-web from 4.10.2 to 4.11.0
+([99b44b9](https://github.com/aljoshare/runo/commit/99b44b913e2e3aacb960f942d92e971d5dff8f66))
+* **deps:** bump criterion from 0.5.1 to 0.6.0
+([ac9e1e5](https://github.com/aljoshare/runo/commit/ac9e1e5b720df4e50ca9d429d1709802749633ee))
+* **deps:** bump clap from 4.5.37 to 4.5.39
+([51798c9](https://github.com/aljoshare/runo/commit/51798c9cd83e2bbd2f507200103bdf6bf1e20fb7))
+* **deps:** bump tokio from 1.44.2 to 1.45.0
+([a9dcc09](https://github.com/aljoshare/runo/commit/a9dcc0973bc464b755eff3dcf978854e1e020dc9))
+* **deps:** bump sha2 from 0.10.8 to 0.10.9
+([1a8c477](https://github.com/aljoshare/runo/commit/1a8c47734f7a628fae09bb3971c60c182be13eef))
+* **deps:** bump chrono from 0.4.40 to 0.4.41
+([e7f5e1b](https://github.com/aljoshare/runo/commit/e7f5e1bc45f5b226fad5cec3031c38fe1a6cd68f))
+* **deps:** bump time from 0.3.40 to 0.3.41
+([faccafe](https://github.com/aljoshare/runo/commit/faccafed5686cd421e24795e6c5df5207cb4bb1d))
+
 ### [v0.2.17](https://github.com/aljoshare/runo/compare/v0.2.16...v0.2.17) (2025-04-23)
 
 #### Fixes
