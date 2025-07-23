@@ -1,5 +1,25 @@
 # Changelog
 
+### [v0.2.19](https://github.com/aljoshare/runo/compare/v0.2.18...v0.2.19) (2025-07-23)
+
+#### Features
+
+* bump mk8sv to Kubernetes v1.30
+([e4362dc](https://github.com/aljoshare/runo/commit/e4362dca499fe9fe282af821b267f5587d6b4dfc))
+
+#### Fixes
+
+* **deps:** bump rand from 0.9.1 to 0.9.2
+([f431a21](https://github.com/aljoshare/runo/commit/f431a219cd208212aa14b4507d6cc29e4de90936))
+* **deps:** bump clap from 4.5.40 to 4.5.41
+([13a66a3](https://github.com/aljoshare/runo/commit/13a66a3d5e6c50847611929deddd7c861d2b395c))
+* **deps:** bump tokio from 1.45.1 to 1.46.1
+([b507306](https://github.com/aljoshare/runo/commit/b507306ac0b9b8fef0d9e32032f4a528fb0e4c59))
+* **deps:** bump k8s-openapi from 0.24.0 to 0.25.0
+([bd342d6](https://github.com/aljoshare/runo/commit/bd342d6c1c5e51d96b3546fe2de6acef9cd94a0f))
+* **deps:** bump kube from 0.99.0 to 1.1.0
+([98aae5a](https://github.com/aljoshare/runo/commit/98aae5a64592a1fa9d9f4d7ebad0784619bf70ff))
+
 ### [v0.2.18](https://github.com/aljoshare/runo/compare/v0.2.17...v0.2.18) (2025-06-10)
 
 #### Features
