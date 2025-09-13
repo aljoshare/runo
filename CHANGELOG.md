@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.24](https://github.com/aljoshare/runo/compare/v0.2.23...v0.2.24) (2025-09-13)
+
+
+### Bug Fixes
+
+* **deps:** bump tokio from 1.46.1 to 1.47.1 ([1e0fd7d](https://github.com/aljoshare/runo/commit/1e0fd7d5ed2dce2ca6d32d33192e0e514ffc00e9))
+* **deps:** bump tokio from 1.46.1 to 1.47.1 ([9a2a6b7](https://github.com/aljoshare/runo/commit/9a2a6b7d29c37843828676d08eca556a626bc33e))
+
 ## [0.2.23](https://github.com/aljoshare/runo/compare/v0.2.22...v0.2.23) (2025-09-13)
 
 
