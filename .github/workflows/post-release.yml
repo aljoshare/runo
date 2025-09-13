@@ -55,7 +55,7 @@ jobs:
   image:
     name: Build and push image
     runs-on: ubuntu-latest
-    needs: release
+    needs: build
     strategy:
       fail-fast: false
       matrix:
