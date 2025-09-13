@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.20](https://github.com/aljoshare/runo/compare/v0.2.19...v0.2.20) (2025-09-13)
+
+
+### Bug Fixes
+
+* **deps:** bump clap from 4.5.41 to 4.5.47 ([c840c21](https://github.com/aljoshare/runo/commit/c840c211e8a2db2cf91663da1869511260889e34))
+* **deps:** bump clap from 4.5.41 to 4.5.47 ([a19ec91](https://github.com/aljoshare/runo/commit/a19ec919ecabeb3f1884db2b42d8b54f11cdc7f6))
+* **deps:** bump criterion from 0.6.0 to 0.7.0 ([5205db1](https://github.com/aljoshare/runo/commit/5205db1216266fc49887ce9243ba52708972e850))
+* **deps:** bump regex from 1.11.1 to 1.11.2 ([69b6862](https://github.com/aljoshare/runo/commit/69b686251474b51c21e07a22d22ecb935f8865e1))
+* **deps:** bump regex from 1.11.1 to 1.11.2 ([c2b77ef](https://github.com/aljoshare/runo/commit/c2b77ef2f999d369d4b944ae0ce41439956d497e))
+* **deps:** bump rstest from 0.25.0 to 0.26.1 ([1e5bd93](https://github.com/aljoshare/runo/commit/1e5bd93908d34c0b9a68e2c2876f233aa25d8c0d))
+* **deps:** bump thiserror from 2.0.12 to 2.0.16 ([00faba7](https://github.com/aljoshare/runo/commit/00faba761ce0a26e94917d5a97ec10e84ecae1d8))
+* **deps:** bump thiserror from 2.0.12 to 2.0.16 ([7ae55a7](https://github.com/aljoshare/runo/commit/7ae55a711539505d8ee7913b2a50ec17a3df7ea4))
+* **deps:** bump tracing-subscriber from 0.3.19 to 0.3.20 ([605fa77](https://github.com/aljoshare/runo/commit/605fa77bf691fe38950b6dcbdecce1b498272555))
+* **deps:** bump tracing-subscriber from 0.3.19 to 0.3.20 ([135e25b](https://github.com/aljoshare/runo/commit/135e25b61c7336cf2c62cec3769f0147411af016))
+
 ### [v0.2.19](https://github.com/aljoshare/runo/compare/v0.2.18...v0.2.19) (2025-07-23)
 
 #### Features
