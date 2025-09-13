@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.21](https://github.com/aljoshare/runo/compare/v0.2.20...v0.2.21) (2025-09-13)
+
+
+### Bug Fixes
+
+* **deps:** bump time from 0.3.41 to 0.3.43 ([8148550](https://github.com/aljoshare/runo/commit/8148550570f9d536d1e2c8f59363a28655703a2b))
+* **deps:** bump time from 0.3.41 to 0.3.43 ([0199446](https://github.com/aljoshare/runo/commit/0199446abaa66b933f9fba143f399ad0065bb9e9))
+
 ## [0.2.20](https://github.com/aljoshare/runo/compare/v0.2.19...v0.2.20) (2025-09-13)
 
 
