@@ -152,6 +152,8 @@ jobs:
           pattern: "*-checksum"
       - name: Merge checksum.txt files
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           for i in  *-checksum ; do cat $i/checksum.txt >> checksums.txt; done
           gh release upload ${{ github.ref }} checksums.txt
