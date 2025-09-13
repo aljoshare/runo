@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.23](https://github.com/aljoshare/runo/compare/v0.2.22...v0.2.23) (2025-09-13)
+
+
+### Bug Fixes
+
+* **deps:** bump chrono from 0.4.41 to 0.4.42 ([43357b5](https://github.com/aljoshare/runo/commit/43357b5dc878ab507c356bf0f29259c0fc041424))
+* **deps:** bump chrono from 0.4.41 to 0.4.42 ([b77ce33](https://github.com/aljoshare/runo/commit/b77ce3312e78be5d11dbe56bc575633d1e81bae3))
+
 ## [0.2.22](https://github.com/aljoshare/runo/compare/v0.2.21...v0.2.22) (2025-09-13)
 
 
