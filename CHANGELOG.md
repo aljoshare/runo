@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.22](https://github.com/aljoshare/runo/compare/v0.2.21...v0.2.22) (2025-09-13)
+
+
+### Bug Fixes
+
+* **deps:** bump anyhow from 1.0.98 to 1.0.99 ([e082a09](https://github.com/aljoshare/runo/commit/e082a09bef9d43fc2b8096563ffc643311904a3d))
+* **deps:** bump anyhow from 1.0.98 to 1.0.99 ([6016d05](https://github.com/aljoshare/runo/commit/6016d05928f1e1a16b9145527d5a2da0a755ffff))
+
 ## [0.2.21](https://github.com/aljoshare/runo/compare/v0.2.20...v0.2.21) (2025-09-13)
 
 
