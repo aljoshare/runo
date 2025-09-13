@@ -154,7 +154,6 @@ jobs:
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ replace(github.ref, 'refs/tags/', '') }}
         run: |
           for i in  *-checksum ; do cat $i/checksum.txt >> checksums.txt; done
-          gh release upload --repo aljoshare/runo ${{ env.TAG }} checksums.txt
+          gh release upload --repo aljoshare/runo ${{ github.ref_name }} checksums.txt
