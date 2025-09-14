@@ -4,7 +4,9 @@ on:
   pull_request:
     branches:
       - main
-
+permissions:
+  contents: read
+  pull-requests: read
 jobs:
   fmt:
     name: Check format with fmt
@@ -27,25 +29,22 @@ jobs:
       - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-  conventional-commit:
-    name: Check if all commits are conventional
+  commit:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
+      - uses: commit-check/commit-check-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          toolchain: stable
-          override: true
-      - uses: actions-rs/install@v0.1
-        with:
-          crate: convco
-          version: latest
-      - name: Check if all commits are conventional
-        run: |
-          git --no-pager log --decorate=short --pretty=oneline -n 50
-          convco check
+          message: true
+          branch: true
+          author-name: true
+          author-email: true
+          commit-signoff: true
+          merge-base: true
+          imperative: false
+          job-summary: true
