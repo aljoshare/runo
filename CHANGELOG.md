@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.26](https://github.com/aljoshare/runo/compare/v0.2.25...v0.2.26) (2025-09-26)
+
+
+### Bug Fixes
+
+* **deps:** bump regex from 1.11.2 to 1.11.3 ([8c53250](https://github.com/aljoshare/runo/commit/8c53250c5b2cb56acb14da44e0c470d70279f1ed))
+* **deps:** bump regex from 1.11.2 to 1.11.3 ([5603ea3](https://github.com/aljoshare/runo/commit/5603ea39fe70e84e4932b0938ac6c4312955e672))
+
 ## [0.2.25](https://github.com/aljoshare/runo/compare/v0.2.24...v0.2.25) (2025-09-14)
 
 
