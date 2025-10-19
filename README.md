@@ -9,6 +9,7 @@
 ![Static Badge](https://img.shields.io/badge/platform-linux-51aff7?logo=docker)
 ![Static Badge](https://img.shields.io/badge/arch-amd64-51aff7?logo=docker)
 ![Static Badge](https://img.shields.io/badge/arch-arm64-51aff7?logo=docker)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/aljoshare/runo/badge)](https://scorecard.dev/viewer/?uri=github.com/aljoshare/runo)
 
 While navigating the great ocean of Kubernetes and spinning up cluster after cluster and environment after environment, a little help is very welcome. rūnō is helping you with the in-cluster generation of secret strings. If no external storage of secrets is needed or desired, and you only want to have a random string for e.g. a database password, a user password or a replica set key, this controller is maybe helpful to you. 
 It supports:
