@@ -36,15 +36,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - uses: commit-check/commit-check-action@v1
+      - uses: aljoshare/commala-action/action.yml@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          message: true
-          branch: true
-          author-name: true
-          author-email: true
-          commit-signoff: false
-          merge-base: true
-          imperative: false
-          job-summary: true
+          first-commit: ${{ github.event.pull_request.base.sha }}
