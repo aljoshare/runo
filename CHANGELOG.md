@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.27](https://github.com/aljoshare/runo/compare/v0.2.26...v0.2.27) (2025-11-03)
+
+
+### Bug Fixes
+
+* **deps:** bump clap from 4.5.48 to 4.5.50 ([#456](https://github.com/aljoshare/runo/issues/456)) ([9ce7d32](https://github.com/aljoshare/runo/commit/9ce7d32c5da7975eb28635a7f49c501d1a971412))
+* **deps:** bump tokio from 1.47.1 to 1.48.0 ([#451](https://github.com/aljoshare/runo/issues/451)) ([b271baf](https://github.com/aljoshare/runo/commit/b271baf53dcc72718bce0213c67526531ef9b5be))
+
 ## [0.2.26](https://github.com/aljoshare/runo/compare/v0.2.25...v0.2.26) (2025-10-13)
 
 
