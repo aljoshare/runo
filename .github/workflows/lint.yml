@@ -32,19 +32,14 @@ jobs:
   commit:
     runs-on: ubuntu-latest
     steps:
+      - name: fetch-depth
+        run: echo "PR_FETCH_DEPTH=${{ github.event.pull_request.commits }}" >> "${GITHUB_ENV}"
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-      - uses: commit-check/commit-check-action@v1
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: ${{ env.PR_FETCH_DEPTH }}
+      - id: git-log
+        run: git log -5
+      - uses: aljoshare/commala-action@v0.3.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          message: true
-          branch: true
-          author-name: true
-          author-email: true
-          commit-signoff: false
-          merge-base: true
-          imperative: false
-          job-summary: true
