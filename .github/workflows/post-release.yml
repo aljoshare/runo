@@ -41,13 +41,13 @@ jobs:
         run: |
           sha256sum ${{ matrix.recipe.target }} > checksum.txt
       - name: Archive checksum.txt
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.recipe.target }}-checksum
           path: checksum.txt
           retention-days: 30
       - name: Archive artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.recipe.target }}
           path: target/${{ matrix.recipe.target }}/release/runo
@@ -98,7 +98,7 @@ jobs:
           digest="${{ steps.build.outputs.digest }}"
           touch "/tmp/digests/${digest#sha256:}" 
       - name: Upload digest
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: digests-${{ matrix.recipe.id }}
           path: /tmp/digests/*
