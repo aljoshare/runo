@@ -23,7 +23,7 @@ jobs:
           - { target: x86_64-unknown-linux-gnu, platform: linux/amd64 }
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -67,7 +67,7 @@ jobs:
       packages: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Debug
         run: |
           echo "github.ref -> {{ github.ref }}"
