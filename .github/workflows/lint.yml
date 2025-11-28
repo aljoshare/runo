@@ -31,6 +31,9 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
   commit:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v5
         with:
@@ -41,6 +44,15 @@ jobs:
       - uses: aljoshare/commala-action@v0.4.1
         with:
           number-of-commits: ${{ env.NUM_COMMITS }}
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v5
+        if: success() || failure()
+        with:
+          report_paths: 'commala-junit.xml'
+          comment: true
+          detailed_summary: true
+          include_passed: true
+      - run: cat commala-junit.xml
       - name: Archive commala logs
         uses: actions/upload-artifact@v4
         with:
