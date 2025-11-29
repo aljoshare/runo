@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.27](https://github.com/aljoshare/runo/compare/v0.2.26...v0.2.27) (2025-11-29)
+
+
+### Bug Fixes
+
+* **deps:** bump assert_cmd from 2.0.17 to 2.1.1 ([#463](https://github.com/aljoshare/runo/issues/463)) ([589c346](https://github.com/aljoshare/runo/commit/589c3462a821ad05832e4bb39a36277a72fd4c37))
+* **deps:** bump clap from 4.5.48 to 4.5.50 ([#456](https://github.com/aljoshare/runo/issues/456)) ([9ce7d32](https://github.com/aljoshare/runo/commit/9ce7d32c5da7975eb28635a7f49c501d1a971412))
+* **deps:** bump clap from 4.5.50 to 4.5.52 ([#467](https://github.com/aljoshare/runo/issues/467)) ([91a5e59](https://github.com/aljoshare/runo/commit/91a5e5999afb06fa0e03b5451bc5fe00260292fc))
+* **deps:** bump clap from 4.5.52 to 4.5.53 ([#468](https://github.com/aljoshare/runo/issues/468)) ([f871035](https://github.com/aljoshare/runo/commit/f87103570d24a33e6059e3a2f1839d22f0e955fc))
+* **deps:** bump tokio from 1.47.1 to 1.48.0 ([#451](https://github.com/aljoshare/runo/issues/451)) ([b271baf](https://github.com/aljoshare/runo/commit/b271baf53dcc72718bce0213c67526531ef9b5be))
+* **deps:** bump tracing from 0.1.41 to 0.1.42 ([#471](https://github.com/aljoshare/runo/issues/471)) ([ff402e8](https://github.com/aljoshare/runo/commit/ff402e8350755436922d8b5b27d63b92681e6d5a))
+
 ## [0.2.26](https://github.com/aljoshare/runo/compare/v0.2.25...v0.2.26) (2025-10-13)
 
 
