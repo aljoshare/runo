@@ -1,0 +1,9 @@
+  <testsuites time="446ns">
+      <testsuite name="Commala Validation" time="446ns" failures="2" errors="0" skipped="0" assertions="5">
+          <testcase name="Author Email" time="98ns"></testcase>
+          <testcase name="Author Name" time="65ns"></testcase>
+          <testcase name="Branch" time="144ns"></testcase>
+          <testcase name="Conventional Message" time="106ns"></testcase>
+          <testcase name="Signed-Off Message" time="33ns"></testcase>
+      </testsuite>
+  </testsuites>
