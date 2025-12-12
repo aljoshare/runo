@@ -31,20 +31,31 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
   commit:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
-      - uses: commit-check/commit-check-action@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: number-of-commits
+        run: echo "NUM_COMMITS=$((${{ github.event.pull_request.commits }}-1))" >> "${GITHUB_ENV}"
+      - uses: aljoshare/commala-action@v0.5.0
         with:
-          message: true
-          branch: true
-          author-name: true
-          author-email: true
-          commit-signoff: false
-          merge-base: true
-          imperative: false
-          job-summary: true
+          number-of-commits: ${{ env.NUM_COMMITS }}
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v5
+        if: success() || failure()
+        with:
+          check_name: 'Commala Report'
+          report_paths: 'commala-junit.xml'
+          comment: true
+          detailed_summary: true
+          include_passed: true
+      - name: Archive commala logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-without-markdown
+          path: |
+            commala.log
