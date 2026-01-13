@@ -1,0 +1,21 @@
+report:
+  junit:
+    path: commala-junit.xml
+validate:
+  author:
+    email:
+      enabled: true
+      whitelist: []
+    name:
+      enabled: true
+      whitelist: []
+  branch:
+    enabled: true
+    whitelist:
+      - "dependabot[bot]@users.noreply.github.com"
+  message:
+    enabled: true
+    whitelist: []
+  signoff:
+    enabled: true
+    whitelist: []
