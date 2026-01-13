@@ -41,7 +41,7 @@ jobs:
           fetch-depth: 0
       - name: number-of-commits
         run: echo "NUM_COMMITS=$((${{ github.event.pull_request.commits }}-1))" >> "${GITHUB_ENV}"
-      - uses: aljoshare/commala-action@v0.5.0
+      - uses: aljoshare/commala-action@v0.6.0
         with:
           number-of-commits: ${{ env.NUM_COMMITS }}
       - name: Publish Test Report
