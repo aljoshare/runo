@@ -12,7 +12,7 @@ validate:
   branch:
     enabled: true
     whitelist:
-      - "dependabot[bot]@users.noreply.github.com"
+      - "9699333+dependabot[bot]@users.noreply.github.com"
   message:
     enabled: true
     whitelist: []
