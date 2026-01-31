@@ -45,7 +45,7 @@ jobs:
         with:
           number-of-commits: ${{ env.NUM_COMMITS }}
       - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v5
+        uses: mikepenz/action-junit-report@v6
         if: success() || failure()
         with:
           check_name: 'Commala Report'
