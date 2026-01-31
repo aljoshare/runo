@@ -54,7 +54,7 @@ jobs:
           detailed_summary: true
           include_passed: true
       - name: Archive commala logs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: dist-without-markdown
           path: |
