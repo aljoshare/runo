@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.28](https://github.com/aljoshare/runo/compare/v0.2.27...v0.2.28) (2026-02-01)
+
+
+### Bug Fixes
+
+* **deps:** bump actix-web from 4.11.0 to 4.12.1 ([#472](https://github.com/aljoshare/runo/issues/472)) ([d7c108b](https://github.com/aljoshare/runo/commit/d7c108b5e3cb2584e8a0a9e00a62621d75d97a6a))
+* **deps:** bump assert_cmd from 2.1.1 to 2.1.2 ([#500](https://github.com/aljoshare/runo/issues/500)) ([8334097](https://github.com/aljoshare/runo/commit/8334097bb69dfab72d2aa3636fc5369cf84b5814))
+* **deps:** bump chrono from 0.4.42 to 0.4.43 ([#497](https://github.com/aljoshare/runo/issues/497)) ([a3f7587](https://github.com/aljoshare/runo/commit/a3f7587f9f73cdd6ecc9a4d56a678c95461b6b86))
+* **deps:** bump clap from 4.5.53 to 4.5.56 ([#501](https://github.com/aljoshare/runo/issues/501)) ([410816b](https://github.com/aljoshare/runo/commit/410816b8f2eda9150550f6e21baabdbf1eee6966))
+* **deps:** bump criterion from 0.7.0 to 0.8.1 ([#477](https://github.com/aljoshare/runo/issues/477)) ([4c05fde](https://github.com/aljoshare/runo/commit/4c05fdef18b37773d53d38491c76575a2f121d88))
+* **deps:** bump thiserror from 2.0.17 to 2.0.18 ([#499](https://github.com/aljoshare/runo/issues/499)) ([06af826](https://github.com/aljoshare/runo/commit/06af826f5cf3fd43184741500fcf02aa9bd06ca1))
+* **deps:** bump time from 0.3.44 to 0.3.46 ([#496](https://github.com/aljoshare/runo/issues/496)) ([19a55a9](https://github.com/aljoshare/runo/commit/19a55a99246df8dad2bf62c1e14194a2d70884a4))
+* **deps:** bump tokio from 1.48.0 to 1.49.0 ([#498](https://github.com/aljoshare/runo/issues/498)) ([c3e6c8d](https://github.com/aljoshare/runo/commit/c3e6c8d73d4b4ccc4135351c159b62b01662685d))
+* **deps:** bump tracing-subscriber from 0.3.20 to 0.3.22 ([#484](https://github.com/aljoshare/runo/issues/484)) ([0b9b907](https://github.com/aljoshare/runo/commit/0b9b907b2eaeba2224c13a2f067b87d85227956e))
+
 ## [0.2.27](https://github.com/aljoshare/runo/compare/v0.2.26...v0.2.27) (2025-11-29)
 
 
