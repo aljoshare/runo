@@ -11,7 +11,7 @@ publish = false
 
 [dependencies]
 tokio = { version = "1.49.0", features = ["full"] }
-kube = { version = "2.0.1", features = ["runtime", "derive"] }
+kube = { version = "3.0.1", features = ["runtime", "derive"] }
 k8s-openapi = { version = "0.27.0", features = ["v1_35"] }
 futures = "0.3.31"
 futures-util = "0.3.28"
