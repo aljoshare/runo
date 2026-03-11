@@ -32,7 +32,7 @@ time = "0.3.47"
 sha2 = "0.10.9"
 
 [dev-dependencies]
-assert_cmd = "2.1.2"
+assert_cmd = "2.2.0"
 criterion = { version = "0.8.2", features = ["html_reports"] }
 rstest = "0.26.1"
 temp-env = "0.3.6"
