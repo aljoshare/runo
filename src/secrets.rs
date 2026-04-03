@@ -7,7 +7,7 @@ use k8s_openapi::api::core::v1::Secret;
 use k8s_openapi::ByteString;
 use kube::api::Patch;
 use kube::{Api, ResourceExt};
-use rand::Rng;
+use rand::RngExt;
 
 use crate::errors::{
     AnnotationUpdateError, CantCreateStringFromRegex, DataUpdateError, InvalidRegexPattern,
