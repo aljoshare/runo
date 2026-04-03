@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.3.0](https://github.com/aljoshare/runo/compare/v0.2.28...v0.3.0) (2026-04-03)
+
+
+### Features
+
+* **deps:** bump k8s-openapi from 0.26.0 to 0.27.0 and kube from 2.0.1 to 3.0.1 ([#514](https://github.com/aljoshare/runo/issues/514)) ([72dd4d2](https://github.com/aljoshare/runo/commit/72dd4d2cd6306d9f7f37117570ac6a3ef30c72ad))
+
+
+### Bug Fixes
+
+* **deps:** bump anyhow from 1.0.100 to 1.0.101 ([#511](https://github.com/aljoshare/runo/issues/511)) ([014ddec](https://github.com/aljoshare/runo/commit/014ddec94c141e4945a00a48228116bb81fb3508))
+* **deps:** bump assert_cmd from 2.1.2 to 2.2.0 ([#526](https://github.com/aljoshare/runo/issues/526)) ([334f050](https://github.com/aljoshare/runo/commit/334f050af60c74e6b409b8fab573bec0f469e8ca))
+* **deps:** bump chrono from 0.4.43 to 0.4.44 ([#518](https://github.com/aljoshare/runo/issues/518)) ([0bebe62](https://github.com/aljoshare/runo/commit/0bebe62d7024851bcddf38d951845c1841ae81b8))
+* **deps:** bump clap from 4.5.56 to 4.5.57 ([#504](https://github.com/aljoshare/runo/issues/504)) ([a166384](https://github.com/aljoshare/runo/commit/a16638481b6b9d944daecc97f29126e7db2ae152))
+* **deps:** bump clap from 4.5.59 to 4.5.60 ([#519](https://github.com/aljoshare/runo/issues/519)) ([6666751](https://github.com/aljoshare/runo/commit/666675135fb44b773aab5418d990ea493a4c83d6))
+* **deps:** bump clap from 4.5.60 to 4.6.0 ([#530](https://github.com/aljoshare/runo/issues/530)) ([0e82b17](https://github.com/aljoshare/runo/commit/0e82b174d7130a2498ddc11935838d4b539abdf3))
+* **deps:** bump criterion from 0.8.1 to 0.8.2 ([#512](https://github.com/aljoshare/runo/issues/512)) ([3d42ca8](https://github.com/aljoshare/runo/commit/3d42ca85f8b25c68a704ad41beb00e164aed2b18))
+* **deps:** bump cron from 0.15.0 to 0.16.0 ([#531](https://github.com/aljoshare/runo/issues/531)) ([8736984](https://github.com/aljoshare/runo/commit/87369845693881cc6d9c665e549dbd16d0a0b406))
+* **deps:** bump k8s-openapi from 0.27.0 to 0.27.1 ([#525](https://github.com/aljoshare/runo/issues/525)) ([98daff6](https://github.com/aljoshare/runo/commit/98daff6339734c1de4a420a01a445dbbc9f54e6b))
+* **deps:** bump kube from 3.0.1 to 3.1.0 ([#528](https://github.com/aljoshare/runo/issues/528)) ([f227e47](https://github.com/aljoshare/runo/commit/f227e47ad39e09041ad2844bd1462ab1442422af))
+* **deps:** bump rand from 0.9.2 to 0.10.0 and rand_regex from 0.18.1 to 0.19.0 ([#537](https://github.com/aljoshare/runo/issues/537)) ([c520735](https://github.com/aljoshare/runo/commit/c5207358959d9c878a8b7ccbc0a32d3694f11733))
+* **deps:** bump regex from 1.12.2 to 1.12.3 ([#503](https://github.com/aljoshare/runo/issues/503)) ([7fb000d](https://github.com/aljoshare/runo/commit/7fb000dbb7c24adc6743f347a0397dfed1ecaaa6))
+* **deps:** bump rustls-webpki from 0.103.9 to 0.103.10 ([#527](https://github.com/aljoshare/runo/issues/527)) ([2132b30](https://github.com/aljoshare/runo/commit/2132b30d4a7401bb9dbd1257592086bd03919423))
+* **deps:** bump time from 0.3.46 to 0.3.47 ([#506](https://github.com/aljoshare/runo/issues/506)) ([428c477](https://github.com/aljoshare/runo/commit/428c4773b41eab0129be53fe44340c6d297a782f))
+* **deps:** bump tokio from 1.49.0 to 1.50.0 ([#524](https://github.com/aljoshare/runo/issues/524)) ([5ffaf67](https://github.com/aljoshare/runo/commit/5ffaf6738de286ef9b4d7fc46c78548d5cccbd9e))
+* **deps:** bump tracing-subscriber from 0.3.22 to 0.3.23 ([#529](https://github.com/aljoshare/runo/issues/529)) ([1dd42f9](https://github.com/aljoshare/runo/commit/1dd42f93787a867454c429b782a09f94fad85b52))
+
 ## [0.2.28](https://github.com/aljoshare/runo/compare/v0.2.27...v0.2.28) (2026-02-01)
 
 
