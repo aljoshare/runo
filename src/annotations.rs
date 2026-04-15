@@ -276,16 +276,12 @@ pub fn clone_from(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
 }
 
 pub fn id_iter(obj: &Arc<Secret>) -> Vec<String> {
-    let generate_keys: Vec<_> = obj
-        .annotations()
+    let prefix = format!("{}-", V1Annotation::Generate.key());
+    obj.annotations()
         .keys()
-        .filter(|p| p.contains(format!("{}-", V1Annotation::Generate.key()).as_str()))
-        .collect();
-    let ids: Vec<_> = generate_keys
-        .into_iter()
-        .map(|p| p.replace(format!("{}-", V1Annotation::Generate.key()).as_str(), ""))
-        .collect();
-    ids
+        .filter(|p| p.contains(prefix.as_str()))
+        .map(|p| p.replace(prefix.as_str(), ""))
+        .collect()
 }
 
 #[allow(dead_code)]
