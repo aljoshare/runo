@@ -163,6 +163,34 @@ data:
 ```
 Annotation to instruct runo to clone the value of a generated field to another field in the same secret but with a different name. For example, if you would like to generate a secret for an application where you need the same value multiple times but with different identifiers.
 
+v1.secret.runo.rocks/pause-${ID}
+----
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: example-secret
+  labels:
+    v1.secret.runo.rocks/managed: "true"
+  annotations:
+    v1.secret.runo.rocks/generate-0: password
+    v1.secret.runo.rocks/generate-1: username
+    v1.secret.runo.rocks/pause-0: "true"
+    v1.secret.runo.rocks/pause-1: "true"
+type: Opaque
+data:
+```
+Boolean annotation to temporarily pause reconciliation for a specific generated field. When set to `true` for a given ID, runo will:
+- Not regenerate the field
+- Not overwrite the field
+- Not remove the field if other annotations change
+- Leave the field untouched until the annotation is removed or set to `false`
+
+This is useful for:
+- Safe migrations between secret structures
+- Gradual rollout of new secret configurations  
+- Preventing accidental overwrites during refactoring of templates
+
 ## Deployment
 
 Please deploy rūnō via the [available Helm chart](https://github.com/AljoschaP/runo-helm-chart).

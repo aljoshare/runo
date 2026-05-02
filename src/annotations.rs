@@ -6,45 +6,49 @@ use tracing::{debug, error, info};
 
 pub enum V1Annotation {
     Charset,
+    CloneFrom,
     Generate,
     GeneratedAt,
     GeneratedWithChecksum,
     Length,
+    Pause,
     Pattern,
     Renewal,
     RenewalCron,
     ConfigChecksum,
     ForceOverwrite,
-    CloneFrom,
 }
 
 impl V1Annotation {
     pub fn key(&self) -> String {
         match *self {
             V1Annotation::Charset => "v1.secret.runo.rocks/charset".to_string(),
+            V1Annotation::CloneFrom => "v1.secret.runo.rocks/clone-from".to_string(),
             V1Annotation::Generate => "v1.secret.runo.rocks/generate".to_string(),
             V1Annotation::GeneratedAt => "v1.secret.runo.rocks/generated-at".to_string(),
             V1Annotation::GeneratedWithChecksum => {
                 "v1.secret.runo.rocks/generated-with-checksum".to_string()
             }
             V1Annotation::Length => "v1.secret.runo.rocks/length".to_string(),
+            V1Annotation::Pause => "v1.secret.runo.rocks/pause".to_string(),
             V1Annotation::Pattern => "v1.secret.runo.rocks/pattern".to_string(),
             V1Annotation::Renewal => "v1.secret.runo.rocks/renewal".to_string(),
             V1Annotation::RenewalCron => "v1.secret.runo.rocks/renewal-cron".to_string(),
             V1Annotation::ConfigChecksum => "v1.secret.runo.rocks/config-checksum".to_string(),
             V1Annotation::ForceOverwrite => "v1.secret.runo.rocks/force-overwrite".to_string(),
-            V1Annotation::CloneFrom => "v1.secret.runo.rocks/clone-from".to_string(),
         }
     }
     pub fn value(&self, id: &str) -> String {
         match *self {
             V1Annotation::Charset => format!("{}-{}", V1Annotation::Charset.key(), id),
+            V1Annotation::CloneFrom => format!("{}-{}", V1Annotation::CloneFrom.key(), id),
             V1Annotation::Generate => format!("{}-{}", V1Annotation::Generate.key(), id),
             V1Annotation::GeneratedAt => format!("{}-{}", V1Annotation::GeneratedAt.key(), id),
             V1Annotation::GeneratedWithChecksum => {
                 format!("{}-{}", V1Annotation::GeneratedWithChecksum.key(), id)
             }
             V1Annotation::Length => format!("{}-{}", V1Annotation::Length.key(), id),
+            V1Annotation::Pause => format!("{}-{}", V1Annotation::Pause.key(), id),
             V1Annotation::Pattern => format!("{}-{}", V1Annotation::Pattern.key(), id),
             V1Annotation::Renewal => format!("{}-{}", V1Annotation::Renewal.key(), id),
             V1Annotation::RenewalCron => format!("{}-{}", V1Annotation::RenewalCron.key(), id),
@@ -53,9 +57,6 @@ impl V1Annotation {
             }
             V1Annotation::ForceOverwrite => {
                 format!("{}-{}", V1Annotation::ForceOverwrite.key(), id)
-            }
-            V1Annotation::CloneFrom => {
-                format!("{}-{}", V1Annotation::CloneFrom.key(), id)
             }
         }
     }
@@ -68,6 +69,7 @@ impl V1Annotation {
             V1Annotation::GeneratedAt => None,
             V1Annotation::GeneratedWithChecksum => None,
             V1Annotation::Length => Some("32".to_string()),
+            V1Annotation::Pause => None,
             V1Annotation::Pattern => Some("[a-zA-Z0-9\\-\\_\\(\\)\\%\\$\\@]".to_string()),
             V1Annotation::Renewal => None,
             V1Annotation::RenewalCron => None,
@@ -112,11 +114,22 @@ fn should_force_overwrite(obj: &Arc<Secret>, id: &str) -> bool {
 }
 
 pub fn needs_clone(obj: &Arc<Secret>, id: &str) -> bool {
-    clone_from(obj, id).exists()
+    if !clone_from(obj, id).exists() {
+        return false;
+    }
+    if is_paused(obj, id) {
+        debug!("Skip clone for paused field with id: {}", id);
+        return false;
+    }
+    true
 }
 
 pub fn needs_generation(obj: &Arc<Secret>, id: &str) -> bool {
     if generate(obj, id).exists() {
+        if is_paused(obj, id) {
+            debug!("Skip generation for paused field with id: {}", id);
+            return false;
+        }
         if needs_clone(obj, id) {
             debug!("Skip generation since field should be cloned");
             return false;
@@ -142,6 +155,10 @@ pub fn needs_generation(obj: &Arc<Secret>, id: &str) -> bool {
 }
 
 pub fn needs_renewal(obj: &Arc<Secret>, id: &str) -> bool {
+    if is_paused(obj, id) {
+        debug!("Skip renewal for paused field with id: {}", id);
+        return false;
+    }
     let renewal_v1 = V1Annotation::Renewal.value(id);
     match obj.annotations().get(&renewal_v1) {
         Some(val) => {
@@ -287,6 +304,15 @@ pub fn id_iter(obj: &Arc<Secret>) -> Vec<String> {
 #[allow(dead_code)]
 pub fn checksum(obj: &Arc<Secret>, id: &str) -> AnnotationResult<String> {
     _annotation_result(obj, V1Annotation::ConfigChecksum, id)
+}
+
+/// Check if a specific field (by id) is paused
+pub fn is_paused(obj: &Arc<Secret>, id: &str) -> bool {
+    let pause_v1 = V1Annotation::Pause.value(id);
+    obj.annotations()
+        .get(&pause_v1)
+        .and_then(|val| val.parse::<bool>().ok())
+        .unwrap_or_default()
 }
 
 #[cfg(test)]
@@ -602,5 +628,70 @@ mod tests {
             &Arc::new(secret),
             "1"
         ));
+    }
+
+    // Pause functionality tests
+    #[rstest]
+    #[case("v1.secret.runo.rocks/pause-0", "true")]
+    fn is_paused_true(#[case] key: String, #[case] value: String) {
+        let secret = build_secret_with_annotations(vec![(key, value)]);
+        let secret_arc = Arc::new(secret);
+        assert!(crate::annotations::is_paused(&secret_arc, "0"));
+    }
+
+    #[rstest]
+    #[case("v1.secret.runo.rocks/pause-0", "false")]
+    fn is_paused_false(#[case] key: String, #[case] value: String) {
+        let secret = build_secret_with_annotations(vec![(key, value)]);
+        let secret_arc = Arc::new(secret);
+        assert!(!crate::annotations::is_paused(&secret_arc, "0"));
+    }
+
+    #[rstest]
+    fn is_paused_doesnt_exist() {
+        let secret = build_secret_with_annotations(vec![]);
+        let secret_arc = Arc::new(secret);
+        assert!(!crate::annotations::is_paused(&secret_arc, "0"));
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+              ("v1.secret.runo.rocks/pause-0".to_string(), "true".to_string())])]
+    fn needs_no_generation_when_paused(#[case] annotations: Vec<(String, String)>) {
+        let secret = build_secret_with_annotations(annotations);
+        let secret_arc = Arc::new(secret);
+        assert!(!crate::annotations::needs_generation(&secret_arc, "0"));
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+              ("v1.secret.runo.rocks/generate-1".to_string(), "password".to_string()),
+              ("v1.secret.runo.rocks/pause-0".to_string(), "true".to_string())])]
+    fn needs_generation_for_non_paused_field(#[case] annotations: Vec<(String, String)>) {
+        let secret = build_secret_with_annotations(annotations);
+        let secret_arc = Arc::new(secret);
+        assert!(!crate::annotations::needs_generation(&secret_arc, "0")); // id 0 is paused
+        assert!(crate::annotations::needs_generation(&secret_arc, "1")); // id 1 is not paused
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+              ("v1.secret.runo.rocks/pause-0".to_string(), "true".to_string()),
+              ("v1.secret.runo.rocks/renewal-0".to_string(), "true".to_string())])]
+    fn needs_no_renewal_when_paused(#[case] annotations: Vec<(String, String)>) {
+        let secret = build_secret_with_annotations(annotations);
+        let secret_arc = Arc::new(secret);
+        assert!(!crate::annotations::needs_renewal(&secret_arc, "0"));
+    }
+
+    #[rstest]
+    #[case(vec![("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+              ("v1.secret.runo.rocks/generate-1".to_string(), "password".to_string()),
+              ("v1.secret.runo.rocks/clone-from-1".to_string(), "0".to_string()),
+              ("v1.secret.runo.rocks/pause-1".to_string(), "true".to_string())])]
+    fn needs_no_clone_when_target_paused(#[case] annotations: Vec<(String, String)>) {
+        let secret = build_secret_with_annotations(annotations);
+        let secret_arc = Arc::new(secret);
+        assert!(!crate::annotations::needs_clone(&secret_arc, "1")); // id 1 (target) is paused
     }
 }
