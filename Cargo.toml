@@ -28,7 +28,7 @@ actix-web = "4.12.1"
 anyhow = "1.0.102"
 clap = { version = "4.6.1", features = ["derive"] }
 time = "0.3.47"
-sha2 = "0.10.9"
+sha2 = "0.11.0"
 
 [dev-dependencies]
 assert_cmd = "2.2.0"

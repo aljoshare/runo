@@ -184,7 +184,7 @@ pub fn create_checksum(obj: &Arc<Secret>, id: &str) -> String {
         hasher.update(annotation);
     }
     let hash = hasher.finalize();
-    format!("{:x}", hash)
+    hash.iter().map(|b| format!("{:02x}", b)).collect()
 }
 
 fn get_annotation_values_for_id<'a>(obj: &'a Arc<Secret>, id: &'a str) -> Vec<&'a String> {
