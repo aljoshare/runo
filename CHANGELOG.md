@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.4.0](https://github.com/aljoshare/runo/compare/v0.3.0...v0.4.0) (2026-05-03)
+
+
+### Features
+
+* add pause annotation ([#549](https://github.com/aljoshare/runo/issues/549)) ([64e5fb1](https://github.com/aljoshare/runo/commit/64e5fb1f31b8adae7748574504dceaa530faceed))
+
+
+### Bug Fixes
+
+* **deps:** bump clap from 4.6.0 to 4.6.1 ([#544](https://github.com/aljoshare/runo/issues/544)) ([6464474](https://github.com/aljoshare/runo/commit/6464474de34ffa9cc2d98d98a2652151e6deaa4c))
+* **deps:** bump rand from 0.10.0 to 0.10.1 ([#542](https://github.com/aljoshare/runo/issues/542)) ([3fb0c51](https://github.com/aljoshare/runo/commit/3fb0c51fbc0a2c742c4dfbf37c401ca4b23107da))
+* **deps:** bump rustls-webpki from 0.103.10 to 0.103.13 ([#548](https://github.com/aljoshare/runo/issues/548)) ([572afd4](https://github.com/aljoshare/runo/commit/572afd443e0985125097516bc3ea23ccd03acf9a))
+* **deps:** bump sha2 from 0.10.9 to 0.11.0 ([#532](https://github.com/aljoshare/runo/issues/532)) ([87554b5](https://github.com/aljoshare/runo/commit/87554b5a5cb70aefe73a13deb5fc565765467039))
+* **deps:** bump tokio from 1.51.0 to 1.52.1 ([#545](https://github.com/aljoshare/runo/issues/545)) ([6bafab1](https://github.com/aljoshare/runo/commit/6bafab1a73aa7ddf0b276f881444212c71073c91))
+
 ## [0.3.0](https://github.com/aljoshare/runo/compare/v0.2.28...v0.3.0) (2026-04-03)
 
 
