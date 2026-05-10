@@ -77,3 +77,14 @@ impl fmt::Display for SecretUpdateError {
         write!(f, "Secret update failed!",)
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct DuplicateKeysError {
+    pub duplicates: Vec<String>,
+}
+
+impl fmt::Display for DuplicateKeysError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Duplicate keys detected: {}", self.duplicates.join(", "))
+    }
+}
