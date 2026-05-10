@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.1](https://github.com/aljoshare/runo/compare/v0.4.0...v0.4.1) (2026-05-10)
+
+
+### Bug Fixes
+
+* **deps:** bump assert_cmd from 2.2.0 to 2.2.1 ([#551](https://github.com/aljoshare/runo/issues/551)) ([490b6b8](https://github.com/aljoshare/runo/commit/490b6b88749fdf20cf7f4bce51a9a7ea25d83f5b))
+* **deps:** bump tokio from 1.52.1 to 1.52.2 ([#552](https://github.com/aljoshare/runo/issues/552)) ([3199f49](https://github.com/aljoshare/runo/commit/3199f49b8bc63099056d67ea49d597cf5e9936eb))
+* **deps:** bump tokio from 1.52.2 to 1.52.3 ([#554](https://github.com/aljoshare/runo/issues/554)) ([aefa6af](https://github.com/aljoshare/runo/commit/aefa6af28da013ed2f0e40d45a73ad0c88749de8))
+* don't overwrite duplicate keys ([#556](https://github.com/aljoshare/runo/issues/556)) ([37c22da](https://github.com/aljoshare/runo/commit/37c22da79dc9769852648eb61d5c1d7ad17bc1e5))
+
 ## [0.4.0](https://github.com/aljoshare/runo/compare/v0.3.0...v0.4.0) (2026-05-03)
 
 
