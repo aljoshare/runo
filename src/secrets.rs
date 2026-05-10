@@ -10,8 +10,8 @@ use kube::{Api, ResourceExt};
 use rand::RngExt;
 
 use crate::errors::{
-    AnnotationUpdateError, CantCreateStringFromRegex, DataUpdateError, InvalidRegexPattern,
-    SecretUpdateError,
+    AnnotationUpdateError, CantCreateStringFromRegex, DataUpdateError, DuplicateKeysError,
+    InvalidRegexPattern, SecretUpdateError,
 };
 use std::collections::BTreeMap;
 
@@ -145,7 +145,35 @@ fn update_annotations(
     Ok(secret_annotations)
 }
 
+/// Collect all field names that will be generated/updated and check for duplicates
+fn validate_no_duplicate_keys(obj: &Arc<Secret>) -> Result<(), DuplicateKeysError> {
+    use std::collections::HashSet;
+    let mut field_names = HashSet::new();
+    let mut duplicates = Vec::new();
+
+    for id in id_iter(obj) {
+        let field_name = generate(obj, &id).get_value();
+
+        // Check if this field name is already registered
+        if !field_names.insert(field_name.clone()) {
+            duplicates.push(field_name);
+        }
+    }
+
+    if duplicates.is_empty() {
+        Ok(())
+    } else {
+        Err(DuplicateKeysError { duplicates })
+    }
+}
+
 fn update_data(obj: &Arc<Secret>) -> Result<BTreeMap<String, ByteString>, DataUpdateError> {
+    // Validate no duplicate keys before processing
+    if let Err(e) = validate_no_duplicate_keys(obj) {
+        error!("{}", e);
+        return Err(DataUpdateError);
+    }
+
     let mut data = match &obj.data {
         Some(data) => data.clone(),
         None => BTreeMap::new(),
@@ -538,5 +566,93 @@ mod tests {
             "2",
         );
         assert!(result.is_err());
+    }
+
+    #[rstest]
+    #[case(vec![
+        ("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+        ("v1.secret.runo.rocks/generate-1".to_string(), "username".to_string())
+    ])]
+    fn test_update_data_fails_on_duplicate_keys(#[case] annotations: Vec<(String, String)>) {
+        let secret = build_secret_with_annotations(annotations);
+        let result = update_data(&Arc::from(secret));
+        // Should fail because both generate-0 and generate-1 produce "username"
+        assert!(result.is_err());
+    }
+
+    #[rstest]
+    #[case(vec![
+        ("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+        ("v1.secret.runo.rocks/generate-1".to_string(), "password".to_string())
+    ])]
+    fn test_update_data_succeeds_with_unique_keys(#[case] annotations: Vec<(String, String)>) {
+        let secret = build_secret_with_annotations(annotations);
+        let result = update_data(&Arc::from(secret));
+        assert!(result.is_ok());
+        let data = result.unwrap();
+        assert!(data.contains_key("username"));
+        assert!(data.contains_key("password"));
+    }
+
+    #[rstest]
+    #[case(vec![
+        ("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+        ("v1.secret.runo.rocks/generate-1".to_string(), "username".to_string()),
+        ("v1.secret.runo.rocks/generate-2".to_string(), "password".to_string())
+    ])]
+    fn test_update_data_fails_with_multiple_duplicates(#[case] annotations: Vec<(String, String)>) {
+        let secret = build_secret_with_annotations(annotations);
+        let result = update_data(&Arc::from(secret));
+        // Should fail because generate-0 and generate-1 both produce "username"
+        assert!(result.is_err());
+    }
+
+    #[rstest]
+    #[case(vec![
+        ("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+        ("v1.secret.runo.rocks/generate-1".to_string(), "username".to_string()),
+        ("v1.secret.runo.rocks/clone-from-1".to_string(), "0".to_string())
+    ])]
+    fn test_update_data_fails_with_duplicate_generate_and_clone(
+        #[case] annotations: Vec<(String, String)>,
+    ) {
+        let secret = build_secret_with_annotations(annotations);
+        let result = update_data(&Arc::from(secret));
+        // generate-0 produces "username", generate-1 produces "username" - duplicate!
+        assert!(result.is_err());
+    }
+
+    #[rstest]
+    #[case(vec![
+        ("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+        ("v1.secret.runo.rocks/generate-1".to_string(), "password".to_string()),
+        ("v1.secret.runo.rocks/clone-from-1".to_string(), "0".to_string()),
+        ("v1.secret.runo.rocks/generate-2".to_string(), "username".to_string())
+    ])]
+    fn test_update_data_fails_with_clone_and_generate_duplicate(
+        #[case] annotations: Vec<(String, String)>,
+    ) {
+        let secret = build_secret_with_annotations(annotations);
+        let result = update_data(&Arc::from(secret));
+        // generate-0 produces "username", generate-2 produces "username" - duplicate!
+        assert!(result.is_err());
+    }
+
+    #[rstest]
+    #[case(vec![
+        ("v1.secret.runo.rocks/generate-0".to_string(), "username".to_string()),
+        ("v1.secret.runo.rocks/generate-1".to_string(), "username-cloned".to_string()),
+        ("v1.secret.runo.rocks/clone-from-1".to_string(), "0".to_string())
+    ])]
+    fn test_update_data_succeeds_with_clone_unique_keys(
+        #[case] annotations: Vec<(String, String)>,
+    ) {
+        let secret = build_secret_with_annotations(annotations);
+        let result = update_data(&Arc::from(secret));
+        // This should succeed - generate-0 produces "username", generate-1 produces "username-cloned", clone copies username to username-cloned
+        assert!(result.is_ok());
+        let data = result.unwrap();
+        assert!(data.contains_key("username"));
+        assert!(data.contains_key("username-cloned"));
     }
 }
