@@ -2392,7 +2392,7 @@ dependencies = [
 
 [[package]]
 name = "runo"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "actix-web",
  "anyhow",
