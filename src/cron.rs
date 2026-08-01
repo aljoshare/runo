@@ -38,8 +38,8 @@ fn build_cronjob_spec(
     cron_spec: AnnotationResult<String>,
     secret_name: &str,
     id: &str,
-) -> Option<CronJobSpec> {
-    Some(CronJobSpec {
+) -> CronJobSpec {
+    CronJobSpec {
         schedule: cron_spec.get_value(),
         job_template: JobTemplateSpec {
             spec: Some(JobSpec {
@@ -52,7 +52,7 @@ fn build_cronjob_spec(
             ..JobTemplateSpec::default()
         },
         ..CronJobSpec::default()
-    })
+    }
 }
 
 fn build_pod_spec(secret_name: &str, id: &str) -> Option<PodSpec> {
