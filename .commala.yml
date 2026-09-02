@@ -13,6 +13,7 @@ validate:
     enabled: true
     whitelist:
       - "49699333+dependabot[bot]@users.noreply.github.com"
+      - "add-secret-scanning.*"
   message:
     enabled: true
     whitelist: []

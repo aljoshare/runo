@@ -854,7 +854,7 @@ mod tests {
         let secret_before_cron = secrets.get(secret_name).await.unwrap().data.unwrap();
         let username_before_cron =
             from_utf8(&secret_before_cron.get("username").unwrap().0).unwrap();
-        sleep(Duration::from_secs(60)).await;
+        sleep(Duration::from_secs(65)).await;
 
         // check if renewal annotation is set
         let secret_with_renewal_annotation = secrets
