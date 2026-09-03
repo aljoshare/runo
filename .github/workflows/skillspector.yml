@@ -1,0 +1,82 @@
+name: SkillSpector
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  skillspector:
+    name: Scan Agent Skills
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install NVIDIA SkillSpector
+        run: pip install git+https://github.com/NVIDIA/SkillSpector.git
+
+      - name: Scan AI agent skills
+        run: |
+          TARGETS=()
+          if [ -d ".agents/skills" ]; then
+            TARGETS+=(".agents/skills")
+          fi
+          if [ -d ".github/skills" ]; then
+            TARGETS+=(".github/skills")
+          fi
+          if [ -d "skills" ]; then
+            TARGETS+=("skills")
+          fi
+
+          if [ ${#TARGETS[@]} -eq 0 ]; then
+            while IFS= read -r skill_md; do
+              if [ -n "$skill_md" ]; then
+                TARGETS+=("$(dirname "$skill_md")")
+              fi
+            done < <(find . -name "SKILL.md" -not -path "./.git/*" 2>/dev/null || true)
+          fi
+
+          if [ ${#TARGETS[@]} -eq 0 ]; then
+            echo "No AI agent skills (SKILL.md) found in repository. Skipping scan."
+            exit 0
+          fi
+
+          for target in "${TARGETS[@]}"; do
+            echo "Scanning skills in: $target"
+            if find "$target" -mindepth 2 -name "SKILL.md" | grep -q .; then
+              skillspector scan "$target" --recursive --no-llm --format sarif --output skillspector.sarif || true
+              skillspector scan "$target" --recursive --no-llm
+            else
+              skillspector scan "$target" --no-llm --format sarif --output skillspector.sarif || true
+              skillspector scan "$target" --no-llm
+            fi
+          done
+
+      - name: Upload SARIF report to Code Scanning
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('skillspector.sarif') != ''
+        with:
+          sarif_file: skillspector.sarif
+          category: skillspector
+
+      - name: Upload SARIF artifact
+        uses: actions/upload-artifact@v7
+        if: always() && hashFiles('skillspector.sarif') != ''
+        with:
+          name: skillspector-sarif
+          path: skillspector.sarif
+          retention-days: 5
