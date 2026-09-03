@@ -55,16 +55,148 @@ jobs:
             exit 0
           fi
 
+          mkdir -p .sarif_raw
+          idx=0
           for target in "${TARGETS[@]}"; do
             echo "Scanning skills in: $target"
+            raw_sarif=".sarif_raw/scan_${idx}.sarif"
             if find "$target" -mindepth 2 -name "SKILL.md" | grep -q .; then
-              skillspector scan "$target" --recursive --no-llm --format sarif --output skillspector.sarif || true
+              skillspector scan "$target" --recursive --no-llm --format sarif --output "$raw_sarif" || true
               skillspector scan "$target" --recursive --no-llm
             else
-              skillspector scan "$target" --no-llm --format sarif --output skillspector.sarif || true
+              skillspector scan "$target" --no-llm --format sarif --output "$raw_sarif" || true
               skillspector scan "$target" --no-llm
             fi
+            idx=$((idx + 1))
           done
+
+      - name: Consolidate SARIF report
+        if: always()
+        run: |
+          python3 - <<'EOF'
+          import glob
+          import json
+          import os
+          import sys
+
+          sarif_files = sorted(glob.glob(".sarif_raw/*.sarif"))
+          if not sarif_files:
+              if os.path.isfile("skillspector.sarif"):
+                  sarif_files = ["skillspector.sarif"]
+              else:
+                  print("No SARIF files found to consolidate.")
+                  sys.exit(0)
+
+          combined_rules = []
+          seen_rule_ids = set()
+          combined_results = []
+          combined_invocations = []
+          driver_name = "skillspector"
+          driver_version = None
+          sarif_schema = "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json"
+          sarif_version = "2.1.0"
+
+          for filepath in sarif_files:
+              try:
+                  with open(filepath, "r", encoding="utf-8") as f:
+                      data = json.load(f)
+              except Exception as e:
+                  print(f"Warning: Could not read {filepath}: {e}")
+                  continue
+
+              if not isinstance(data, dict):
+                  continue
+
+              if data.get("$schema"):
+                  sarif_schema = data["$schema"]
+              if data.get("version"):
+                  sarif_version = data["version"]
+
+              runs = data.get("runs", [])
+              if not isinstance(runs, list):
+                  continue
+
+              for run in runs:
+                  if not isinstance(run, dict):
+                      continue
+
+                  tool = run.get("tool", {})
+                  driver = tool.get("driver", {})
+                  if driver.get("name"):
+                      driver_name = driver["name"]
+                  if driver.get("version"):
+                      driver_version = driver["version"]
+
+                  for rule in driver.get("rules", []):
+                      if isinstance(rule, dict) and rule.get("id"):
+                          rid = rule["id"]
+                          if rid not in seen_rule_ids:
+                              seen_rule_ids.add(rid)
+                              combined_rules.append(rule)
+
+                  skill_props = run.get("properties", {}).get("recursiveSkill", {})
+                  skill_rel_path = skill_props.get("path") if isinstance(skill_props, dict) else None
+
+                  for result in run.get("results", []):
+                      if not isinstance(result, dict):
+                          continue
+
+                      for loc in result.get("locations", []):
+                          aloc = loc.get("physicalLocation", {}).get("artifactLocation", {})
+                          uri = aloc.get("uri", "")
+                          if uri and not os.path.isabs(uri) and "://" not in uri:
+                              candidates = [uri]
+                              if skill_rel_path:
+                                  candidates.append(os.path.join(skill_rel_path, uri))
+                                  for prefix in [".agents/skills", ".github/skills", "skills"]:
+                                      candidates.append(os.path.join(prefix, skill_rel_path, uri))
+                              for prefix in [".agents/skills", ".github/skills", "skills"]:
+                                  candidates.append(os.path.join(prefix, uri))
+
+                              for cand in candidates:
+                                  norm = os.path.normpath(cand)
+                                  if os.path.isfile(norm):
+                                      aloc["uri"] = norm
+                                      break
+
+                      combined_results.append(result)
+
+                  for inv in run.get("invocations", []):
+                      if isinstance(inv, dict):
+                          combined_invocations.append(inv)
+
+          rule_id_to_idx = {r["id"]: idx for idx, r in enumerate(combined_rules)}
+          for result in combined_results:
+              rid = result.get("ruleId")
+              if rid and rid in rule_id_to_idx:
+                  result["ruleIndex"] = rule_id_to_idx[rid]
+
+          single_run = {
+              "tool": {
+                  "driver": {
+                      "name": driver_name,
+                      "rules": combined_rules,
+                  }
+              },
+              "results": combined_results,
+          }
+          if driver_version:
+              single_run["tool"]["driver"]["version"] = driver_version
+          if combined_invocations:
+              single_run["invocations"] = combined_invocations
+
+          consolidated = {
+              "$schema": sarif_schema,
+              "version": sarif_version,
+              "runs": [single_run],
+          }
+
+          output_path = "skillspector.sarif"
+          with open(output_path, "w", encoding="utf-8") as f:
+              json.dump(consolidated, f, indent=2)
+
+          print(f"Successfully consolidated {len(sarif_files)} file(s) into {output_path} with 1 run, {len(combined_rules)} rule(s), and {len(combined_results)} finding(s).")
+          EOF
 
       - name: Upload SARIF report to Code Scanning
         uses: github/codeql-action/upload-sarif@v4
