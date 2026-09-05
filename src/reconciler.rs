@@ -149,7 +149,12 @@ mod tests {
         }
     }
 
+    async fn cleanup_secret(secrets: &Api<Secret>, name: &str) {
+        let _ = secrets.delete(name, &DeleteParams::default()).await;
+    }
+
     #[tokio::test]
+    #[ignore = "requires running Kubernetes cluster"]
     async fn integration_reconcile_should_generate_secret() {
         let secret_name = "runo-generate-test-generate";
         let config = Config::from_kubeconfig(&get_kubeconfig_options())
@@ -172,6 +177,7 @@ mod tests {
             vec![(key_0, value_0), (key_1, value_1)],
         );
         let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        cleanup_secret(&secrets, secret_name).await;
         secrets.create(&post_params, &secret).await.unwrap();
 
         // Data should be empty
@@ -203,6 +209,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires running Kubernetes cluster"]
     async fn integration_reconcile_should_not_generate_secret_if_field_already_exists() {
         let secret_name = "runo-generate-test-generate-field-already-exists";
         let config = Config::from_kubeconfig(&get_kubeconfig_options())
@@ -233,6 +240,7 @@ mod tests {
         secret.data = Some(predefined_data);
 
         let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        cleanup_secret(&secrets, secret_name).await;
         secrets.create(&post_params, &secret).await.unwrap();
 
         // Data should not be empty
@@ -268,6 +276,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires running Kubernetes cluster"]
     async fn integration_reconcile_should_generate_secret_if_field_already_exists_and_overwrite_is_true(
     ) {
         let secret_name = "runo-generate-test-generate-field-already-exists-and-overwrite";
@@ -303,6 +312,7 @@ mod tests {
         secret.data = Some(predefined_data);
 
         let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        cleanup_secret(&secrets, secret_name).await;
         secrets.create(&post_params, &secret).await.unwrap();
 
         // Data should not be empty
@@ -338,6 +348,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires running Kubernetes cluster"]
     async fn integration_reconcile_should_generate_checksum() {
         let secret_name = "runo-generate-test-generate-checksum";
         let config = Config::from_kubeconfig(&get_kubeconfig_options())
@@ -360,6 +371,7 @@ mod tests {
             vec![(key_0, value_0), (key_1, value_1)],
         );
         let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        cleanup_secret(&secrets, secret_name).await;
         secrets.create(&post_params, &secret).await.unwrap();
 
         // Data should be empty
@@ -391,6 +403,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires running Kubernetes cluster"]
     async fn integration_reconcile_should_generate_after_reconfiguration() {
         let secret_name = "runo-generate-test-generate-after-reconfiguration";
         let config = Config::from_kubeconfig(&get_kubeconfig_options())
@@ -415,6 +428,7 @@ mod tests {
             vec![(key_0, value_0), (key_1, value_1)],
         );
         let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        cleanup_secret(&secrets, secret_name).await;
         secrets.create(&post_params, &secret).await.unwrap();
 
         // Data should be empty
@@ -491,6 +505,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires running Kubernetes cluster"]
     async fn integration_reconcile_should_not_generate_secret_when_unmanaged() {
         let secret_name = "runo-generate-test-unmanaged";
         let config = Config::from_kubeconfig(&get_kubeconfig_options())
@@ -513,6 +528,7 @@ mod tests {
             vec![(key_0, value_0), (key_1, value_1)],
         );
         let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        cleanup_secret(&secrets, secret_name).await;
         secrets.create(&post_params, &secret).await.unwrap();
 
         // Data should be empty
@@ -530,6 +546,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires running Kubernetes cluster"]
     async fn integration_reconcile_should_generate_secret_with_length() {
         let secret_name = "runo-generate-test-length";
         let config = Config::from_kubeconfig(&get_kubeconfig_options())
@@ -552,6 +569,7 @@ mod tests {
             vec![(key_1, value_1), (key_2, value_2)],
         );
         let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        cleanup_secret(&secrets, secret_name).await;
         secrets.create(&post_params, &secret).await.unwrap();
 
         // Data should be empty
@@ -571,6 +589,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires running Kubernetes cluster"]
     async fn integration_reconcile_should_generate_secret_with_charset() {
         let secret_name = "runo-generate-test-charset";
         let config = Config::from_kubeconfig(&get_kubeconfig_options())
@@ -593,6 +612,7 @@ mod tests {
             vec![(key_1, value_1), (key_2, value_2)],
         );
         let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        cleanup_secret(&secrets, secret_name).await;
         secrets.create(&post_params, &secret).await.unwrap();
 
         // Data should be empty
@@ -614,6 +634,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires running Kubernetes cluster"]
     async fn integration_reconcile_should_generate_secret_with_pattern() {
         let secret_name = "runo-generate-test-pattern";
         let config = Config::from_kubeconfig(&get_kubeconfig_options())
@@ -636,6 +657,7 @@ mod tests {
             vec![(key_1, value_1), (key_2, value_2)],
         );
         let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        cleanup_secret(&secrets, secret_name).await;
         secrets.create(&post_params, &secret).await.unwrap();
 
         // Data should be empty
@@ -657,6 +679,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires running Kubernetes cluster"]
     async fn integration_reconcile_should_clone_secret() {
         let secret_name = "runo-generate-test-clone";
         let config = Config::from_kubeconfig(&get_kubeconfig_options())
@@ -682,6 +705,7 @@ mod tests {
             vec![(key_1, value_1), (key_2, value_2), (key_3, value_3)],
         );
         let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        cleanup_secret(&secrets, secret_name).await;
         secrets.create(&post_params, &secret).await.unwrap();
 
         // Data should be empty
@@ -704,6 +728,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires running Kubernetes cluster"]
     async fn integration_reconcile_should_sync_secret_when_changed() {
         let secret_name = "runo-generate-test-sync-changed";
         let config = Config::from_kubeconfig(&get_kubeconfig_options())
@@ -739,6 +764,7 @@ mod tests {
             ],
         );
         let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        cleanup_secret(&secrets, secret_name).await;
         secrets.create(&post_params, &secret).await.unwrap();
 
         // Data should be empty
@@ -821,6 +847,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires running Kubernetes cluster"]
     async fn integration_reconcile_should_generate_secret_with_renewal() {
         let secret_name = "runo-generate-test-renewal";
         let config = Config::from_kubeconfig(&get_kubeconfig_options())
@@ -843,6 +870,10 @@ mod tests {
             vec![(key_1, value_1), (key_2, value_2)],
         );
         let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        let cronjobs: Api<CronJob> = Api::namespaced(client.clone(), "default");
+        let cron_name = build_cron_name(&Arc::new(secret.clone()), "0");
+        let _ = cronjobs.delete(&cron_name, &DeleteParams::default()).await;
+        cleanup_secret(&secrets, secret_name).await;
         secrets.create(&post_params, &secret).await.unwrap();
         // Data should be empty
         assert!(secrets.get(secret_name).await.unwrap().data.is_none());
@@ -854,16 +885,30 @@ mod tests {
         let secret_before_cron = secrets.get(secret_name).await.unwrap().data.unwrap();
         let username_before_cron =
             from_utf8(&secret_before_cron.get("username").unwrap().0).unwrap();
-        sleep(Duration::from_secs(60)).await;
 
-        // check if renewal annotation is set
-        let secret_with_renewal_annotation = secrets
-            .get(secret_name)
-            .await
-            .unwrap()
-            .metadata
-            .annotations
-            .unwrap();
+        // Poll until renewal annotation is set by the cronjob (up to 75 seconds, polling every 1s)
+        let mut secret_with_renewal_annotation = None;
+        let start_time = std::time::Instant::now();
+        while start_time.elapsed() < Duration::from_secs(75) {
+            if let Ok(sec) = secrets.get(secret_name).await {
+                if let Some(ann) = sec.metadata.annotations {
+                    if ann
+                        .get("v1.secret.runo.rocks/renewal-0")
+                        .map(|s| s.as_str())
+                        == Some("true")
+                    {
+                        secret_with_renewal_annotation = Some(ann);
+                        break;
+                    }
+                }
+            }
+            sleep(Duration::from_secs(1)).await;
+        }
+        assert!(
+            secret_with_renewal_annotation.is_some(),
+            "Timed out waiting for renewal annotation to be set by CronJob"
+        );
+        let secret_with_renewal_annotation = secret_with_renewal_annotation.unwrap();
         assert_eq!(
             secret_with_renewal_annotation
                 .get("v1.secret.runo.rocks/renewal-0")
@@ -883,17 +928,14 @@ mod tests {
             .delete(secret_name, &DeleteParams::default())
             .await
             .unwrap();
-        let cronjobs: Api<CronJob> = Api::namespaced(client.clone(), "default");
         cronjobs
-            .delete(
-                build_cron_name(&Arc::new(secret), "0").as_str(),
-                &DeleteParams::default(),
-            )
+            .delete(cron_name.as_str(), &DeleteParams::default())
             .await
             .unwrap();
     }
 
     #[tokio::test]
+    #[ignore = "requires running Kubernetes cluster"]
     async fn integration_reconcile_should_not_generate_secret_when_dry_run() {
         let secret_name = "runo-generate-test-generate-dry-run";
         let config = Config::from_kubeconfig(&get_kubeconfig_options())
@@ -911,6 +953,7 @@ mod tests {
         let secret =
             build_managed_secret_with_annotations(secret_name.to_string(), vec![(key_0, value_0)]);
         let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
+        cleanup_secret(&secrets, secret_name).await;
         secrets.create(&post_params, &secret).await.unwrap();
 
         // Data should be empty
@@ -929,6 +972,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires running Kubernetes cluster"]
     async fn integration_reconcile_should_not_generate_cronjob_when_dry_run() {
         let secret_name = "runo-generate-test-generate-cronjob-dry-run";
         let config = Config::from_kubeconfig(&get_kubeconfig_options())
@@ -952,6 +996,9 @@ mod tests {
         );
         let secrets: Api<Secret> = Api::namespaced(client.clone(), "default");
         let cronjobs: Api<CronJob> = Api::namespaced(client.clone(), "default");
+        let cron_name = build_cron_name(&Arc::new(secret.clone()), "0");
+        let _ = cronjobs.delete(&cron_name, &DeleteParams::default()).await;
+        cleanup_secret(&secrets, secret_name).await;
         secrets.create(&post_params, &secret).await.unwrap();
 
         // Data should be empty
@@ -962,10 +1009,7 @@ mod tests {
             .await
             .unwrap();
 
-        assert!(cronjobs
-            .get(build_cron_name(&Arc::new(secret), "0").as_str())
-            .await
-            .is_err());
+        assert!(cronjobs.get(cron_name.as_str()).await.is_err());
 
         secrets
             .delete(secret_name, &DeleteParams::default())

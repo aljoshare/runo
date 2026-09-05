@@ -25,4 +25,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - run: cargo test
+      - name: Run unit tests
+        run: cargo test
+      - name: Run Kubernetes integration tests
+        run: cargo test -- --ignored --test-threads=1

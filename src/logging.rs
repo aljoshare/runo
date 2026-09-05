@@ -24,7 +24,9 @@ pub fn get_subscriber(
 mod tests {
     use crate::logging::get_subscriber;
     use rstest::*;
-    use std::env;
+    use std::sync::Mutex;
+
+    static ENV_MUTEX: Mutex<()> = Mutex::new(());
 
     #[rstest]
     #[case("ERROR")]
@@ -33,16 +35,25 @@ mod tests {
     #[case("DEBUG")]
     #[case("TRACE")]
     fn get_valid_subscriber(#[case] log_level: String) {
+        let _lock = ENV_MUTEX.lock().unwrap();
         temp_env::with_var("RUST_LOG", Some(&log_level), || {
             assert!(get_subscriber(false).is_ok());
-            env::remove_var("RUST_LOG");
         });
     }
 
     #[rstest]
     fn err_if_level_not_set() {
+        let _lock = ENV_MUTEX.lock().unwrap();
         temp_env::with_var("RUST_LOG", None::<&str>, || {
             assert!(get_subscriber(false).is_err());
+        });
+    }
+
+    #[rstest]
+    fn default_subscriber_when_level_not_set() {
+        let _lock = ENV_MUTEX.lock().unwrap();
+        temp_env::with_var("RUST_LOG", None::<&str>, || {
+            assert!(get_subscriber(true).is_ok());
         });
     }
 }
