@@ -22,10 +22,12 @@ use tracing_subscriber::util::SubscriberInitExt;
 struct MainArgs {
     #[clap(long, default_value_t = 8080)]
     http_port: u16,
-    #[clap(long, default_value_t = false)]
+    #[clap(long)]
     dry_run: bool,
     #[clap(long, default_value_t = String::from("reconciliation"))]
     mode: String,
+    #[clap(long)]
+    one_shot: bool,
     #[clap(long, default_value_t = 300)]
     requeue_duration: u64,
 }
@@ -43,24 +45,27 @@ async fn main() -> anyhow::Result<()> {
     subscriber.init();
     let k8s = K8s::build(args.dry_run);
     let config = RunoConfig::build(k8s, args.requeue_duration);
-    match args.mode.as_str() {
-        "reconciliation" => {
-            info!("Running runo in reconciliation mode.");
-            let http_server_result = http::run_http_server(args.http_port);
-            let reconciler = reconciler::run_with_reconciliation(config);
-            match http_server_result {
-                Ok(http_server) => {
-                    tokio::join!(reconciler, http_server).1.unwrap();
-                    Ok(())
+    if args.one_shot || args.mode == "one-shot" {
+        info!("Running runo in one-shot mode.");
+        if let Err(e) = reconciler::run_one_shot(config).await {
+            return Err(anyhow!("Failed to run in one-shot mode: {}", e));
+        }
+        Ok(())
+    } else {
+        match args.mode.as_str() {
+            "reconciliation" => {
+                info!("Running runo in reconciliation mode.");
+                let http_server_result = http::run_http_server(args.http_port);
+                let reconciler = reconciler::run_with_reconciliation(config);
+                match http_server_result {
+                    Ok(http_server) => {
+                        tokio::join!(reconciler, http_server).1.unwrap();
+                        Ok(())
+                    }
+                    Err(_) => Err(anyhow!("Can't bind HTTP server to port!")),
                 }
-                Err(_) => Err(anyhow!("Can't bind HTTP server to port!")),
             }
+            _ => Err(anyhow!("Mode is not supported!: {:?}", args.mode)),
         }
-        "one-shot" => {
-            info!("Running runo in one-shot mode.");
-            reconciler::run_one_shot(config).await;
-            Ok(())
-        }
-        _ => Err(anyhow!("Mode is not supported!: {:?}", args.mode)),
     }
 }

@@ -100,6 +100,13 @@ fn build_security_context() -> Option<SecurityContext> {
 }
 
 async fn create_or_replace(cj: CronJob, namespace: &str, k8s: &K8s) {
+    if k8s.dry_run {
+        tracing::info!(
+            "Simulating CronJob update for {:?}",
+            cj.metadata.name.as_deref().unwrap_or("unknown")
+        );
+        return;
+    }
     let cronjobs: Api<CronJob> = Api::namespaced(K8s::get_client().await, namespace);
     let c = cronjobs.create(&k8s.get_post_params(), &cj).await;
     match c {

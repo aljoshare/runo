@@ -51,12 +51,16 @@ pub async fn run_with_reconciliation(config: RunoConfig) {
         .await;
 }
 
-pub async fn run_one_shot(config: RunoConfig) {
+pub async fn run_one_shot(config: RunoConfig) -> anyhow::Result<()> {
     let client = K8s::get_client().await;
     let secrets = Api::<Secret>::all(client);
-    for secret in secrets.list(&ListParams::default()).await.unwrap() {
+    let list_params = ListParams::default().labels(&labels::get_managed_label());
+
+    let secret_list = secrets.list(&list_params).await?;
+    for secret in secret_list {
         let _ = reconcile(Arc::new(secret), Arc::new(config)).await;
     }
+    Ok(())
 }
 
 #[cfg(test)]

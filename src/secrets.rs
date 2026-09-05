@@ -287,6 +287,19 @@ pub async fn update(obj: &Arc<Secret>, k8s: &K8s) -> Result<Secret, SecretUpdate
     let secrets: Api<Secret> =
         Api::namespaced(K8s::get_client().await, obj.namespace().unwrap().as_str());
     let updated_secret = get_updated_secret(obj)?;
+    if k8s.dry_run {
+        let keys: Vec<String> = updated_secret
+            .data
+            .as_ref()
+            .map(|data| data.keys().cloned().collect())
+            .unwrap_or_default();
+        tracing::info!(
+            "Simulating secret update for {} with keys {:?}",
+            obj.name_any(),
+            keys
+        );
+        return Ok(updated_secret);
+    }
     match secrets
         .patch(
             &obj.name_any(),

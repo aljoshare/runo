@@ -9,6 +9,21 @@ fn runs() {
 }
 
 #[test]
+fn one_shot() {
+    let mut cmd = Command::cargo_bin("runo").unwrap();
+    // In our test environment, Kubernetes cluster is not available by default.
+    // Thus it exits with failure because of the kubeconfig connection issue.
+    // Asserting failure is accurate for this environment.
+    cmd.arg("--one-shot").assert().failure();
+}
+
+#[test]
+fn dry_run_one_shot() {
+    let mut cmd = Command::cargo_bin("runo").unwrap();
+    cmd.arg("--dry-run").arg("--one-shot").assert().failure();
+}
+
+#[test]
 fn help() {
     let mut cmd = Command::cargo_bin("runo").unwrap();
     cmd.arg("--help").assert().success();
