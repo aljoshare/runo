@@ -1,81 +1,74 @@
-use std::fmt;
+use thiserror::Error;
 
-#[derive(Debug, Clone)]
+#[derive(Error, Debug, Clone)]
+#[error("No namespace for secret")]
 pub struct NoNamespaceForSecret;
 
-impl fmt::Display for NoNamespaceForSecret {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "No namespace for secret")
-    }
-}
-
-#[derive(Debug, Clone)]
+#[derive(Error, Debug, Clone)]
+#[error("Can't create random string from specified regex")]
 pub struct CantCreateStringFromRegex;
 
-impl fmt::Display for CantCreateStringFromRegex {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Can't create random string from specified regex")
-    }
-}
-
-#[derive(Debug, Clone)]
+#[derive(Error, Debug, Clone)]
+#[error("RUST_LOG is not set properly!")]
 pub struct LogLevelMissing;
 
-impl fmt::Display for LogLevelMissing {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "RUST_LOG is not set properly!")
-    }
-}
-
-#[derive(Debug, Clone)]
+#[derive(Error, Debug, Clone)]
+#[error(
+    "Invalid pattern {pattern}! You can't use quantifiers (e.g. +, *, ? or {{}}) in regex pattern"
+)]
 pub struct InvalidRegexPattern {
     pub pattern: String,
 }
 
-impl fmt::Display for InvalidRegexPattern {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Invalid pattern {}! You can't use quantifiers (e.g. +, *, ? or {{}}) in regex pattern",
-            self.pattern
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
+#[derive(Error, Debug, Clone)]
+#[error("Data update failed!")]
 pub struct DataUpdateError;
 
-impl fmt::Display for DataUpdateError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Data update failed!",)
-    }
-}
-
-#[derive(Debug, Clone)]
+#[derive(Error, Debug, Clone)]
+#[error("Annotation update failed!")]
 pub struct AnnotationUpdateError;
 
-impl fmt::Display for AnnotationUpdateError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Annotation update failed!",)
-    }
-}
-
-#[derive(Debug, Clone)]
+#[derive(Error, Debug, Clone)]
+#[error("Secret update failed!")]
 pub struct SecretUpdateError;
 
-impl fmt::Display for SecretUpdateError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Secret update failed!",)
-    }
-}
-
-#[derive(Debug, Clone)]
+#[derive(Error, Debug, Clone)]
+#[error("Duplicate keys detected: {}", duplicates.join(", "))]
 pub struct DuplicateKeysError {
     pub duplicates: Vec<String>,
 }
 
-impl fmt::Display for DuplicateKeysError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Duplicate keys detected: {}", self.duplicates.join(", "))
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_error_displays() {
+        assert_eq!(NoNamespaceForSecret.to_string(), "No namespace for secret");
+        assert_eq!(
+            CantCreateStringFromRegex.to_string(),
+            "Can't create random string from specified regex"
+        );
+        assert_eq!(LogLevelMissing.to_string(), "RUST_LOG is not set properly!");
+        assert_eq!(
+            InvalidRegexPattern {
+                pattern: "[a-z]+".to_string()
+            }
+            .to_string(),
+            "Invalid pattern [a-z]+! You can't use quantifiers (e.g. +, *, ? or {}) in regex pattern"
+        );
+        assert_eq!(DataUpdateError.to_string(), "Data update failed!");
+        assert_eq!(
+            AnnotationUpdateError.to_string(),
+            "Annotation update failed!"
+        );
+        assert_eq!(SecretUpdateError.to_string(), "Secret update failed!");
+        assert_eq!(
+            DuplicateKeysError {
+                duplicates: vec!["key1".to_string(), "key2".to_string()]
+            }
+            .to_string(),
+            "Duplicate keys detected: key1, key2"
+        );
     }
 }

@@ -11,7 +11,7 @@ use rand::RngExt;
 
 use crate::errors::{
     AnnotationUpdateError, CantCreateStringFromRegex, DataUpdateError, DuplicateKeysError,
-    InvalidRegexPattern, SecretUpdateError,
+    InvalidRegexPattern, NoNamespaceForSecret, SecretUpdateError,
 };
 use std::collections::BTreeMap;
 
@@ -21,6 +21,8 @@ use std::sync::Arc;
 use std::time::SystemTime;
 use tracing::error;
 use tracing::log::debug;
+
+const FORBIDDEN_CHARS: &[char] = &['+', '?', '*', '{', '}'];
 
 pub fn generate_random_string(
     obj: &Arc<Secret>,
@@ -60,13 +62,10 @@ fn generate_random_string_from_charset(length: usize, charset: &str) -> String {
 }
 
 fn validate_pattern(pattern: &str) -> Result<&str, InvalidRegexPattern> {
-    let forbidden_chars = vec!["+", "?", "*", "{", "}"];
-    for char in forbidden_chars {
-        if pattern.contains(char) {
-            return Err(InvalidRegexPattern {
-                pattern: pattern.to_string(),
-            });
-        }
+    if pattern.contains(FORBIDDEN_CHARS) {
+        return Err(InvalidRegexPattern {
+            pattern: pattern.to_string(),
+        });
     }
     Ok(pattern)
 }
@@ -81,11 +80,11 @@ fn generate_random_string_from_pattern(
     let gen = rand_regex::Regex::compile(pattern_with_length.as_str(), length.try_into().unwrap());
     match gen {
         Ok(compiled) => {
-            let samples = (&mut rng)
+            let random_string = (&mut rng)
                 .sample_iter(&compiled)
-                .take(5)
-                .collect::<Vec<String>>();
-            Ok(samples.first().unwrap().to_string())
+                .next()
+                .ok_or(CantCreateStringFromRegex)?;
+            Ok(random_string)
         }
         Err(e) => {
             error!("Can't create string from regex: {:?}, {:?}", pattern, e);
@@ -104,11 +103,8 @@ fn update_annotations(
     for id in id_iter(obj) {
         if !generated_with_checksum(obj, &id).exists() {
             // Migration code to make sure that old secret witout the annotations gets the update
-            let generated_with_checksum_v1 = format!(
-                "{}-{}",
-                annotations::V1Annotation::GeneratedWithChecksum.key(),
-                id
-            );
+            let generated_with_checksum_v1 =
+                annotations::V1Annotation::GeneratedWithChecksum.value(&id);
             let checksum = create_checksum(obj, id.as_str());
             secret_annotations.insert(generated_with_checksum_v1, checksum);
         }
@@ -118,28 +114,23 @@ fn update_annotations(
                 obj.name_any(),
                 id
             );
-            let generated_at_v1 =
-                format!("{}-{}", annotations::V1Annotation::GeneratedAt.key(), id);
+            let generated_at_v1 = annotations::V1Annotation::GeneratedAt.value(&id);
             let now: DateTime<Utc> = SystemTime::now().into();
             secret_annotations.insert(generated_at_v1, now.timestamp().to_string());
-            let generated_with_checksum_v1 = format!(
-                "{}-{}",
-                annotations::V1Annotation::GeneratedWithChecksum.key(),
-                id
-            );
+            let generated_with_checksum_v1 =
+                annotations::V1Annotation::GeneratedWithChecksum.value(&id);
             let checksum = create_checksum(obj, id.as_str());
             secret_annotations.insert(generated_with_checksum_v1, checksum);
         }
         if needs_renewal(obj, id.as_str()) {
             secret_annotations.insert(
-                format!("{}-{}", annotations::V1Annotation::Renewal.key(), id),
+                annotations::V1Annotation::Renewal.value(&id),
                 "false".to_string(),
             );
         }
         let checksum = create_checksum(obj, id.as_str());
         debug!("Adding checksum {:?} for config with ID {:?}", checksum, id);
-        let checksum_v1: String =
-            format!("{}-{}", annotations::V1Annotation::ConfigChecksum.key(), id);
+        let checksum_v1: String = annotations::V1Annotation::ConfigChecksum.value(&id);
         secret_annotations.insert(checksum_v1, checksum);
     }
     Ok(secret_annotations)
@@ -270,22 +261,27 @@ fn clone_data_field(
 }
 
 fn get_updated_secret(obj: &Arc<Secret>) -> Result<Secret, SecretUpdateError> {
-    let maybe_data = update_data(obj);
-    let maybe_annotations = update_annotations(obj);
-    let mut secret = Secret {
-        ..Secret::default()
-    };
-    if maybe_data.is_err() || maybe_annotations.is_err() {
-        return Err(SecretUpdateError);
-    }
-    secret.data = Some(maybe_data.unwrap());
-    secret.metadata.annotations = Some(maybe_annotations.unwrap());
-    Ok(secret)
+    let data = update_data(obj).map_err(|_| SecretUpdateError)?;
+    let annotations = update_annotations(obj).map_err(|_| SecretUpdateError)?;
+    Ok(Secret {
+        data: Some(data),
+        metadata: kube::api::ObjectMeta {
+            annotations: Some(annotations),
+            ..Default::default()
+        },
+        ..Default::default()
+    })
 }
 
 pub async fn update(obj: &Arc<Secret>, k8s: &K8s) -> Result<Secret, SecretUpdateError> {
-    let secrets: Api<Secret> =
-        Api::namespaced(K8s::get_client().await, obj.namespace().unwrap().as_str());
+    let namespace = match obj.namespace() {
+        Some(ns) => ns,
+        None => {
+            error!("{:?}", NoNamespaceForSecret);
+            return Err(SecretUpdateError);
+        }
+    };
+    let secrets: Api<Secret> = Api::namespaced(K8s::get_client().await, &namespace);
     let updated_secret = get_updated_secret(obj)?;
     match secrets
         .patch(

@@ -20,45 +20,24 @@ pub enum V1Annotation {
 }
 
 impl V1Annotation {
-    pub fn key(&self) -> String {
+    pub fn key(&self) -> &'static str {
         match *self {
-            V1Annotation::Charset => "v1.secret.runo.rocks/charset".to_string(),
-            V1Annotation::CloneFrom => "v1.secret.runo.rocks/clone-from".to_string(),
-            V1Annotation::Generate => "v1.secret.runo.rocks/generate".to_string(),
-            V1Annotation::GeneratedAt => "v1.secret.runo.rocks/generated-at".to_string(),
-            V1Annotation::GeneratedWithChecksum => {
-                "v1.secret.runo.rocks/generated-with-checksum".to_string()
-            }
-            V1Annotation::Length => "v1.secret.runo.rocks/length".to_string(),
-            V1Annotation::Pause => "v1.secret.runo.rocks/pause".to_string(),
-            V1Annotation::Pattern => "v1.secret.runo.rocks/pattern".to_string(),
-            V1Annotation::Renewal => "v1.secret.runo.rocks/renewal".to_string(),
-            V1Annotation::RenewalCron => "v1.secret.runo.rocks/renewal-cron".to_string(),
-            V1Annotation::ConfigChecksum => "v1.secret.runo.rocks/config-checksum".to_string(),
-            V1Annotation::ForceOverwrite => "v1.secret.runo.rocks/force-overwrite".to_string(),
+            V1Annotation::Charset => "v1.secret.runo.rocks/charset",
+            V1Annotation::CloneFrom => "v1.secret.runo.rocks/clone-from",
+            V1Annotation::Generate => "v1.secret.runo.rocks/generate",
+            V1Annotation::GeneratedAt => "v1.secret.runo.rocks/generated-at",
+            V1Annotation::GeneratedWithChecksum => "v1.secret.runo.rocks/generated-with-checksum",
+            V1Annotation::Length => "v1.secret.runo.rocks/length",
+            V1Annotation::Pause => "v1.secret.runo.rocks/pause",
+            V1Annotation::Pattern => "v1.secret.runo.rocks/pattern",
+            V1Annotation::Renewal => "v1.secret.runo.rocks/renewal",
+            V1Annotation::RenewalCron => "v1.secret.runo.rocks/renewal-cron",
+            V1Annotation::ConfigChecksum => "v1.secret.runo.rocks/config-checksum",
+            V1Annotation::ForceOverwrite => "v1.secret.runo.rocks/force-overwrite",
         }
     }
     pub fn value(&self, id: &str) -> String {
-        match *self {
-            V1Annotation::Charset => format!("{}-{}", V1Annotation::Charset.key(), id),
-            V1Annotation::CloneFrom => format!("{}-{}", V1Annotation::CloneFrom.key(), id),
-            V1Annotation::Generate => format!("{}-{}", V1Annotation::Generate.key(), id),
-            V1Annotation::GeneratedAt => format!("{}-{}", V1Annotation::GeneratedAt.key(), id),
-            V1Annotation::GeneratedWithChecksum => {
-                format!("{}-{}", V1Annotation::GeneratedWithChecksum.key(), id)
-            }
-            V1Annotation::Length => format!("{}-{}", V1Annotation::Length.key(), id),
-            V1Annotation::Pause => format!("{}-{}", V1Annotation::Pause.key(), id),
-            V1Annotation::Pattern => format!("{}-{}", V1Annotation::Pattern.key(), id),
-            V1Annotation::Renewal => format!("{}-{}", V1Annotation::Renewal.key(), id),
-            V1Annotation::RenewalCron => format!("{}-{}", V1Annotation::RenewalCron.key(), id),
-            V1Annotation::ConfigChecksum => {
-                format!("{}-{}", V1Annotation::ConfigChecksum.key(), id)
-            }
-            V1Annotation::ForceOverwrite => {
-                format!("{}-{}", V1Annotation::ForceOverwrite.key(), id)
-            }
-        }
+        format!("{}-{}", self.key(), id)
     }
     fn default(&self) -> Option<String> {
         match *self {
@@ -160,22 +139,15 @@ pub fn needs_renewal(obj: &Arc<Secret>, id: &str) -> bool {
         return false;
     }
     let renewal_v1 = V1Annotation::Renewal.value(id);
-    match obj.annotations().get(&renewal_v1) {
-        Some(val) => {
+    obj.annotations()
+        .get(&renewal_v1)
+        .and_then(|val| {
             debug!("Value of annotation {:?} is {:?}", renewal_v1, val);
-            match val.parse() {
-                Ok(bool_val) => bool_val,
-                Err(e) => {
-                    error!("Can't parse {} to bool, {:?}", val, e);
-                    false
-                }
-            }
-        }
-        None => {
-            debug!("No renewal needed {:?}", renewal_v1);
-            false
-        }
-    }
+            val.parse::<bool>()
+                .map_err(|e| error!("Can't parse {} to bool, {:?}", val, e))
+                .ok()
+        })
+        .unwrap_or(false)
 }
 
 pub fn create_checksum(obj: &Arc<Secret>, id: &str) -> String {
@@ -188,15 +160,14 @@ pub fn create_checksum(obj: &Arc<Secret>, id: &str) -> String {
 }
 
 fn get_annotation_values_for_id<'a>(obj: &'a Arc<Secret>, id: &'a str) -> Vec<&'a String> {
+    let suffix = format!("-{}", id);
     let annotations_for_id: Vec<(&String, &String)> = obj
         .annotations()
         .iter()
-        .filter(|p| !p.0.starts_with(V1Annotation::ConfigChecksum.key().as_str()))
-        .filter(|p| {
-            !p.0.starts_with(V1Annotation::GeneratedWithChecksum.key().as_str())
-        })
-        .filter(|p| !p.0.starts_with(V1Annotation::GeneratedAt.key().as_str()))
-        .filter(|p| p.0.ends_with(format!("-{}", id).as_str()))
+        .filter(|p| !p.0.starts_with(V1Annotation::ConfigChecksum.key()))
+        .filter(|p| !p.0.starts_with(V1Annotation::GeneratedWithChecksum.key()))
+        .filter(|p| !p.0.starts_with(V1Annotation::GeneratedAt.key()))
+        .filter(|p| p.0.ends_with(suffix.as_str()))
         .collect();
     annotations_for_id.iter().map(|p| p.1).collect()
 }
@@ -207,36 +178,28 @@ pub fn has_cron(obj: &Arc<Secret>, id: &str) -> bool {
 }
 
 pub fn length(obj: &Arc<Secret>, id: &str) -> AnnotationResult<usize> {
+    const DEFAULT_LENGTH: usize = 32;
     let length_v1 = V1Annotation::Length.value(id);
     match obj.annotations().get(&length_v1) {
-        Some(value) => {
-            let length = value.parse::<i32>().unwrap() as usize;
-            match length > 0 && length <= 100 {
-                true => AnnotationResult {
-                    value: length,
-                    default: false,
-                    exists: true,
-                },
-                false => {
-                    error!("Invalid length! Please set a length > 0 and <= 100. Proceeding with default length.");
-                    match V1Annotation::Length.default() {
-                        Some(default) => AnnotationResult {
-                            value: default.parse::<i32>().unwrap() as usize,
-                            default: true,
-                            exists: false,
-                        },
-                        None => panic!("No default set for length! Panic!"),
-                    }
+        Some(value) => match value.parse::<usize>() {
+            Ok(len) if (1..=100).contains(&len) => AnnotationResult {
+                value: len,
+                default: false,
+                exists: true,
+            },
+            _ => {
+                error!("Invalid length! Please set a length > 0 and <= 100. Proceeding with default length.");
+                AnnotationResult {
+                    value: DEFAULT_LENGTH,
+                    default: true,
+                    exists: false,
                 }
             }
-        }
-        None => match V1Annotation::Length.default() {
-            Some(default) => AnnotationResult {
-                value: default.parse::<i32>().unwrap() as usize,
-                default: true,
-                exists: false,
-            },
-            None => panic!("No default set for length! Panic!"),
+        },
+        None => AnnotationResult {
+            value: DEFAULT_LENGTH,
+            default: true,
+            exists: false,
         },
     }
 }
@@ -296,8 +259,7 @@ pub fn id_iter(obj: &Arc<Secret>) -> Vec<String> {
     let prefix = format!("{}-", V1Annotation::Generate.key());
     obj.annotations()
         .keys()
-        .filter(|p| p.contains(prefix.as_str()))
-        .map(|p| p.replace(prefix.as_str(), ""))
+        .filter_map(|key| key.strip_prefix(&prefix).map(ToString::to_string))
         .collect()
 }
 
@@ -393,6 +355,7 @@ mod tests {
     #[case("v1.secret.runo.rocks/length-0", "-1")]
     #[case("v1.secret.runo.rocks/length-0", "0")]
     #[case("v1.secret.runo.rocks/length-0", "101")]
+    #[case("v1.secret.runo.rocks/length-0", "not-a-number")]
     fn v1_length_invalid(#[case] key: String, #[case] value: String) {
         let secret = build_secret_with_annotations(vec![(key, value)]);
         assert!(crate::annotations::length(&Arc::new(secret), "0").is_default());

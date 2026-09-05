@@ -14,7 +14,7 @@ pub fn run_http_server(http_port: u16) -> Result<Server, Error> {
             .wrap(middleware::Logger::default().exclude("/health"))
             .service(health)
     })
-    .bind(format!("0.0.0.0:{:?}", http_port));
+    .bind(("0.0.0.0", http_port));
     match server {
         Ok(s) => Ok(s.shutdown_timeout(5).run()),
         Err(e) => {
