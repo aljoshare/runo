@@ -160,7 +160,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     let runtime = tokio::runtime::Runtime::new().expect("Unable to create a runtime");
     runtime.block_on(setup());
     c.bench_function("one-shot", |b| {
-        b.iter(|| runs_one_shot());
+        b.iter(runs_one_shot);
         runtime.block_on(clear());
     });
     runtime.block_on(teardown());

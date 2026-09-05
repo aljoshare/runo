@@ -10,15 +10,6 @@ impl fmt::Display for NoNamespaceForSecret {
 }
 
 #[derive(Debug, Clone)]
-pub struct AnnotationsDoesntExist;
-
-impl fmt::Display for AnnotationsDoesntExist {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "No annotations in metadata")
-    }
-}
-
-#[derive(Debug, Clone)]
 pub struct CantCreateStringFromRegex;
 
 impl fmt::Display for CantCreateStringFromRegex {
