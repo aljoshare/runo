@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.1](https://github.com/aljoshare/runo/compare/v0.5.0...v0.5.1) (2026-09-05)
+
+
+### Bug Fixes
+
+* advisory regarding H2 ([#599](https://github.com/aljoshare/runo/issues/599)) ([66e3b14](https://github.com/aljoshare/runo/commit/66e3b14a6b96619833d76b66522320ab229c121b))
+* **clippy:** resolve clippy warnings and dead code ([#595](https://github.com/aljoshare/runo/issues/595)) ([076fbbe](https://github.com/aljoshare/runo/commit/076fbbe67fa9c2f837ba480c564b9d506af175cb))
+* **deps:** bump actions/checkout from 6.0.2 to 7.0.1 ([#580](https://github.com/aljoshare/runo/issues/580)) ([e17608d](https://github.com/aljoshare/runo/commit/e17608ddc496c6e5e42bc7af31121d0ab0a01aa3))
+* **deps:** bump actix-web from 4.14.0 to 4.15.0 ([#587](https://github.com/aljoshare/runo/issues/587)) ([0ddb9b2](https://github.com/aljoshare/runo/commit/0ddb9b2130723765decd10ce8fbb9206ac4a583c))
+* **deps:** bump clap from 4.6.5 to 4.6.6 ([#585](https://github.com/aljoshare/runo/issues/585)) ([18d0054](https://github.com/aljoshare/runo/commit/18d00544a6ea7864ed73a4f4ee051680c14558aa))
+* **deps:** bump github/codeql-action/upload-sarif from 4.36.0 to 4.37.9 ([#579](https://github.com/aljoshare/runo/issues/579)) ([244b806](https://github.com/aljoshare/runo/commit/244b80687e542dd11693b3c5c13177ab6615cdad))
+* **deps:** bump googleapis/release-please-action from 4 to 5 ([#576](https://github.com/aljoshare/runo/issues/576)) ([3ab5487](https://github.com/aljoshare/runo/commit/3ab54874cd5043365810b9e05c6b677f9c7f2157))
+* **deps:** bump thiserror from 2.0.19 to 2.0.20 ([#586](https://github.com/aljoshare/runo/issues/586)) ([4c2f968](https://github.com/aljoshare/runo/commit/4c2f968fa3447eb82734cf1655e8d1cb3440fd06))
+
 ## [0.5.0](https://github.com/aljoshare/runo/compare/v0.4.0...v0.5.0) (2026-08-01)
 
 
