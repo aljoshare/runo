@@ -19,6 +19,6 @@ jobs:
       checks: write
     steps:
       - uses: actions/checkout@v7.0.1
-      - uses: actions-rs/audit-check@v1
+      - uses: rustsec/audit-check@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
