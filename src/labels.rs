@@ -2,21 +2,18 @@ use std::sync::Arc;
 
 use k8s_openapi::api::core::v1::Secret;
 
+pub const MANAGED_LABEL: &str = "v1.secret.runo.rocks/managed";
+
 pub fn managed_by_us(obj: &Arc<Secret>) -> bool {
-    let r = match &obj.metadata.labels {
-        Some(l) => match l.get(&get_managed_label()) {
-            Some(m) => m == &"true".to_string(),
-            None => {
-                return false;
-            }
-        },
-        None => false,
-    };
-    r
+    obj.metadata
+        .labels
+        .as_ref()
+        .and_then(|l| l.get(MANAGED_LABEL))
+        .is_some_and(|val| val == "true")
 }
 
 pub fn get_managed_label() -> String {
-    "v1.secret.runo.rocks/managed".to_string()
+    MANAGED_LABEL.to_string()
 }
 
 #[cfg(test)]
@@ -68,7 +65,7 @@ mod tests {
     }
 
     #[rstest]
-    fn v1_unmanaged_secret_implicitly(unmanaged_secret_explicitly: Arc<Secret>) {
-        assert!(!managed_by_us(&unmanaged_secret_explicitly));
+    fn v1_unmanaged_secret_implicitly(unmanaged_secret_implicitly: Arc<Secret>) {
+        assert!(!managed_by_us(&unmanaged_secret_implicitly));
     }
 }
