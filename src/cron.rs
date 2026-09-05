@@ -158,7 +158,7 @@ mod tests {
         }
     }
 
-    #[cfg(test)]
+    #[test]
     fn test_build_cronjob() {
         let secret = Arc::from(build_secret());
         let cronjob = build_cronjob(&secret, "test-secret", "0");
