@@ -42,17 +42,30 @@ As a developer who intentionally wants runo to replace an existing field value, 
 
 ---
 
+### User Story 3 - Protect Existing Fields Against Unintentional Clone Overwrites (Priority: P2)
+
+As a Kubernetes operator, I want field cloning to respect pre-existing secret keys, so that adding a `clone-from` annotation will not overwrite existing data unless `force-overwrite` is explicitly true.
+
+**Acceptance Scenarios**:
+
+1. **Given** a `Secret` with `data.target` already populated,
+   **When** runo reconciles field `1` targeting `"target"` via `clone-from-1: "0"` without `force-overwrite-1: "true"`,
+   **Then** runo preserves the existing `data.target` without overwriting.
+
+---
+
 ### Edge Cases
 
 - **Boolean String Parsing**: `force-overwrite` must strictly evaluate `"true"`. Values like `"false"`, `""`, or `"1"` must not trigger overwrite.
 - **Multi-field Granularity**: In a secret with multiple fields, `force-overwrite` on field `0` must not affect field `1`.
+- **Cloned Field Coverage**: Force-overwrite semantics apply equally to generated fields and cloned fields.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: System MUST inspect `Secret.data` before generating a field.
-- **FR-002**: System MUST skip generation if the target field key already exists in `Secret.data` and force-overwrite is not enabled.
+- **FR-001**: System MUST inspect `Secret.data` before generating or cloning a field.
+- **FR-002**: System MUST skip generation or cloning if the target field key already exists in `Secret.data` and force-overwrite is not enabled.
 - **FR-003**: System MUST support `v1.secret.runo.rocks/force-overwrite-${ID}` to override field protection.
 
 ## Success Criteria *(mandatory)*

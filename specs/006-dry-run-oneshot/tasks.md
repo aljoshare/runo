@@ -6,8 +6,8 @@
 
 **Purpose**: Review existing CLI and runtime entrypoints to prepare for execution mode additions.
 
-- [ ] T001 Review existing CLI arguments and execution flow in src/main.rs
-- [ ] T002 [P] Inspect test harness configuration for CLI testing in tests/test_main.rs
+- [x] T001 Review existing CLI arguments and execution flow in src/main.rs
+- [x] T002 [P] Inspect test harness configuration for CLI testing in tests/test_main.rs
 
 ---
 
@@ -17,8 +17,8 @@
 
 **⚠️ CRITICAL**: All story work depends on foundational parameter and mode handling.
 
-- [ ] T003 Ensure K8s struct in src/k8s.rs correctly exposes dry_run configuration in PatchParams and PostParams
-- [ ] T004 [P] Define ExecutionMode resolution logic mapping CLI flags (one_shot, mode) in src/main.rs
+- [x] T003 Ensure K8s struct in src/k8s.rs correctly exposes dry_run configuration in PatchParams and PostParams
+- [x] T004 [P] Define ExecutionMode resolution logic mapping CLI flags (one_shot, mode) in src/main.rs
 
 **Checkpoint**: Foundation ready - user story implementation can now begin.
 
@@ -32,15 +32,15 @@
 
 ### Tests for User Story 1
 
-- [ ] T005 [P] [US1] Add CLI argument test for --one-shot flag in tests/test_main.rs
-- [ ] T006 [P] [US1] Add integration test asserting process termination in one-shot mode in tests/test_main.rs
+- [x] T005 [P] [US1] Add CLI argument test for --one-shot flag in tests/test_main.rs
+- [x] T006 [P] [US1] Add integration test asserting process termination in one-shot mode in tests/test_main.rs
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] Add --one-shot clap argument to MainArgs and deprecate mode in src/main.rs
-- [ ] T008 [US1] Update run_one_shot to use managed label selector and return Result in src/reconciler.rs
-- [ ] T009 [US1] Wire one-shot mode dispatch in main to bypass actix-web HTTP server and exit cleanly in src/main.rs
-- [ ] T010 [US1] Handle errors during one-shot execution to exit with non-zero status on failure in src/main.rs
+- [x] T007 [US1] Add --one-shot clap argument to MainArgs and deprecate mode in src/main.rs
+- [x] T008 [US1] Update run_one_shot to use managed label selector and return Result in src/reconciler.rs
+- [x] T009 [US1] Wire one-shot mode dispatch in main to bypass actix-web HTTP server and exit cleanly in src/main.rs
+- [x] T010 [US1] Handle errors during one-shot execution to exit with non-zero status on failure in src/main.rs
 
 **Checkpoint**: User Story 1 is fully functional and independently testable as an MVP.
 
@@ -54,13 +54,13 @@
 
 ### Tests for User Story 2
 
-- [ ] T011 [P] [US2] Add CLI argument test for combined --dry-run and --one-shot in tests/test_main.rs
+- [x] T011 [P] [US2] Add CLI argument test for combined --dry-run and --one-shot in tests/test_main.rs
 
 ### Implementation for User Story 2
 
-- [ ] T012 [US2] Add structured INFO logging for simulated secret updates in src/secrets.rs
-- [ ] T013 [US2] Audit dry-run logging to ensure zero plaintext secret values are leaked in src/secrets.rs
-- [ ] T014 [US2] Verify CronJob creation and replacement respects dry_run params in src/cron.rs
+- [x] T012 [US2] Add structured INFO logging for simulated secret updates in src/secrets.rs
+- [x] T013 [US2] Audit dry-run logging to ensure zero plaintext secret values are leaked in src/secrets.rs
+- [x] T014 [US2] Verify CronJob creation and replacement respects dry_run params in src/cron.rs
 
 **Checkpoint**: User Stories 1 and 2 are both functional, tested, and verifiable individually and in combination.
 
@@ -70,8 +70,8 @@
 
 **Purpose**: Documentation, formatting, quality gates, and final end-to-end scenario validation.
 
-- [ ] T015 [P] Update CLI options documentation in README.md
-- [ ] T016 Run formatting and lint checks (cargo fmt and cargo clippy) across src/main.rs and src/reconciler.rs
+- [x] T015 [P] Update CLI options documentation in README.md
+- [x] T016 Run formatting and lint checks (cargo fmt and cargo clippy) across src/main.rs and src/reconciler.rs
 - [ ] T017 Execute validation scenarios defined in specs/006-dry-run-oneshot/quickstart.md
 
 ---

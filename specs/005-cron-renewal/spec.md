@@ -46,6 +46,10 @@ As a cluster operator, I want the controller to sleep and requeue reconciliation
 
 - **Invalid Cron Syntax**: Malformed cron string must be logged as an error without crashing the controller.
 - **Missing `generated-at`**: If timestamp is missing, assume immediate initial generation and record timestamp.
+- **CronJob Name Collision**: When secret names share identical 20-character prefixes, a deterministic SHA256 slug prevents collisions (`runo-renew-{slug}-{hash_short}-{id}`).
+- **Secret Deletion Cascade**: CronJobs include an `ownerReferences` pointing to the owning Secret UID so Kubernetes automatically garbage collects orphaned CronJobs when the Secret is deleted.
+- **Cron Schedule Removal**: When `renewal-cron` annotation is removed from a secret field, the associated CronJob is actively deleted from the namespace.
+- **Concurrent Updates**: CronJobs are updated via Server-Side Apply (`Patch::Apply`) using field manager `runo` to avoid 409 Conflict races.
 
 ## Requirements *(mandatory)*
 
@@ -54,7 +58,11 @@ As a cluster operator, I want the controller to sleep and requeue reconciliation
 - **FR-001**: System MUST support `v1.secret.runo.rocks/renewal-cron-${ID}` supporting standard cron syntax.
 - **FR-002**: System MUST record RFC3339 timestamp in `v1.secret.runo.rocks/generated-at-${ID}` upon generation.
 - **FR-003**: System MUST calculate next rotation timestamp using the `cron` and `chrono` crates.
-- **FR-004**: System MUST recalculate requeue duration to wake up when rotation is due.
+- **FR-004**: System MUST calculate requeue duration dynamically as the minimum time until the next scheduled cron run, clamped to `requeue_duration`.
+- **FR-005**: CronJobs created for renewal MUST include an `ownerReferences` entry referencing the Secret's UID, API version, and kind with `controller: true` and `block_owner_deletion: true`.
+- **FR-006**: CronJobs MUST be created/updated using Server-Side Apply (`Patch::Apply`) with field manager `runo`.
+- **FR-007**: When `has_cron(secret, id)` is false, runo MUST delete any existing CronJob for that field ID.
+- **FR-008**: CronJob names MUST use deterministic short hashing to prevent name collisions across similarly-named secrets.
 
 ## Success Criteria *(mandatory)*
 

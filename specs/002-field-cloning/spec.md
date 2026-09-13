@@ -58,10 +58,36 @@ As a developer, I want clear errors when referencing a non-existent or unpopulat
 
 ---
 
+### User Story 4 - Order-Independent Cloning (Forward References) (Priority: P2)
+
+As a Kubernetes application author, I want field cloning to work regardless of the numeric order of IDs (e.g., ID `0` cloning from ID `1`), so that I am not constrained by artificial numbering ordering.
+
+**Acceptance Scenarios**:
+
+1. **Given** field `0` (`clone-from-0: "1"`, `generate-0: "replica"`) and field `1` (`generate-1: "source"`),
+   **When** runo executes two-pass reconciliation,
+   **Then** field `1` is generated first, and field `0` is cloned successfully from field `1` within the same cycle.
+
+---
+
+### User Story 5 - Pre-existing Field Protection on Clone Targets (Priority: P2)
+
+As an operator, I want existing data keys to be protected against unintentional overwrite by a cloned field unless explicitly requested via `force-overwrite`.
+
+**Acceptance Scenarios**:
+
+1. **Given** a secret where `Secret.data["target"]` already exists, and field `1` is configured to clone to `"target"` without `force-overwrite-1: "true"`,
+   **When** runo reconciles,
+   **Then** the clone operation is safely skipped, preserving the pre-existing data.
+
+---
+
 ### Edge Cases
 
 - **Self-Cloning**: A field targeting itself (`clone-from-0: "0"`). Must be blocked as invalid source data.
 - **Empty Source Data**: Source field annotation exists, but source data field is currently missing or empty in `Secret.data`. Must return error and avoid writing an empty string.
+- **Pre-existing Target Key**: If the target key is already populated in `Secret.data`, cloning will not overwrite it unless `force-overwrite-${ID}: "true"`.
+- **Cloned Field Metadata Tracking**: Cloned fields receive `generated-at-${ID}` and `generated-with-checksum-${ID}` annotations upon successful cloning.
 
 ## Requirements *(mandatory)*
 
@@ -72,6 +98,9 @@ As a developer, I want clear errors when referencing a non-existent or unpopulat
 - **FR-003**: System MUST skip random generation for field `${ID}` when `needs_clone` is `true`.
 - **FR-004**: System MUST check if source field is itself cloned and reject transitive cloning.
 - **FR-005**: Cloned values MUST be copied verbatim as `ByteString`.
+- **FR-006**: Data reconciliation MUST use a two-pass mechanism (generation and renewals first, cloning second) so forward clone references resolve deterministically within a single pass.
+- **FR-007**: Cloned fields MUST NOT overwrite existing target keys in `Secret.data` unless `force-overwrite-${ID}` is set to `"true"`.
+- **FR-008**: Cloned fields MUST record `generated-at-${ID}` and `generated-with-checksum-${ID}` annotations upon being updated.
 
 ### Key Entities
 
