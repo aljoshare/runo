@@ -46,15 +46,18 @@ As a cluster administrator, I want runo to avoid self-triggering updates by igno
 
 - **Pre-existing Secrets without Checksum**: If `generated-with-checksum` annotation is missing (legacy secret), runo must record the checksum without unexpectedly regenerating the secret unless forced.
 - **Checksum Collision**: Handled by using full SHA256 cryptographic hashing over concatenated configuration parameters.
+- **Operational and Foreign Annotation Isolation**: Checksum calculation MUST strictly isolate generation parameters (`generate`, `length`, `charset`, `pattern`, `clone-from`) and exclude operational annotations (`pause`, `renewal`, `renewal-cron`, `force-overwrite`), metadata annotations (`generated-at`, `generated-with-checksum`, `config-checksum`), and unrelated user annotations.
+- **Single-Pass Drift Detection**: `needs_generation` computes the checksum of current configuration annotations on-the-fly and compares directly against `generated-with-checksum`, executing regeneration in a single pass when drift occurs.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: System MUST compute SHA256 hash over `length`, `pattern`, and `charset` for each field ID.
+- **FR-001**: System MUST compute SHA256 hash over only generation configuration parameters (`generate`, `length`, `charset`, `pattern`, `clone-from`) for each field ID.
 - **FR-002**: System MUST store current configuration hash in `v1.secret.runo.rocks/config-checksum-${ID}`.
 - **FR-003**: System MUST record the hash used at generation time in `v1.secret.runo.rocks/generated-with-checksum-${ID}`.
-- **FR-004**: System MUST trigger regeneration if `config-checksum` does not match `generated-with-checksum`.
+- **FR-004**: System MUST trigger regeneration in a single reconciliation pass if current configuration hash does not match `generated-with-checksum-${ID}`.
+- **FR-005**: Updating operational annotations (such as toggling `force-overwrite`, `pause`, or `renewal-cron`) MUST NOT alter the configuration checksum.
 
 ## Success Criteria *(mandatory)*
 

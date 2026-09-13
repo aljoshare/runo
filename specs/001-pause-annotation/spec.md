@@ -62,11 +62,24 @@ As a developer using `clone-from` to synchronize multiple secret keys, I want th
 
 ---
 
+### User Story 4 - Staging Field Replacements Without Duplicate Key Conflicts (Priority: P3)
+
+As an operator transitioning a secret field's generation strategy, I want paused fields to be ignored by duplicate key validation so that I can declare a new configuration targeting the same key name before retiring the old one.
+
+**Acceptance Scenarios**:
+
+1. **Given** a secret where field `0` generates `"db_pass"` and field `1` also targets `"db_pass"` but has `pause-1: "true"`,
+   **When** runo executes validation and reconciliation,
+   **Then** duplicate key validation succeeds and does not throw `DuplicateKeysError`.
+
+---
+
 ### Edge Cases
 
 - **Malformed Boolean Values**: If `v1.secret.runo.rocks/pause-${ID}` contains invalid text (e.g. `"yes"`, `"1"`, or empty string), it must safely parse and default to `false` (unpaused) without raising a panic or error.
 - **Missing Pause Annotation**: If the annotation does not exist on the Secret, `is_paused` must return `false`.
 - **Unpausing a Field**: When `pause-${ID}` is changed from `"true"` to `"false"` or removed, the next reconciliation cycle must resume normal generation, renewal, and cloning workflows immediately.
+- **Duplicate Key Validation**: Paused fields are omitted from duplicate key checks, preventing false conflict errors when staging migrations.
 
 ## Requirements *(mandatory)*
 
@@ -78,6 +91,7 @@ As a developer using `clone-from` to synchronize multiple secret keys, I want th
 - **FR-004**: `needs_renewal(secret, id)` MUST return `false` if `is_paused(secret, id)` is `true`.
 - **FR-005**: `needs_clone(secret, id)` MUST return `false` if `is_paused(secret, id)` is `true`.
 - **FR-006**: The controller MUST log a structured debug message when skipping operations on paused fields.
+- **FR-007**: `validate_no_duplicate_keys(secret)` MUST skip any field ID where `is_paused(secret, id)` is `true`.
 
 ### Key Entities
 
