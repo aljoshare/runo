@@ -51,18 +51,33 @@ pub async fn run_with_reconciliation(config: RunoConfig) {
         .await;
 }
 
-pub async fn run_one_shot(config: RunoConfig) {
+pub async fn run_one_shot(config: RunoConfig) -> anyhow::Result<()> {
     let client = K8s::get_client().await;
     let secrets = Api::<Secret>::all(client);
     let list_params = ListParams::default().labels(labels::MANAGED_LABEL);
+    let mut has_failure = false;
     match secrets.list(&list_params).await {
         Ok(secret_list) => {
             let config = Arc::new(config);
             for secret in secret_list {
-                let _ = reconcile(Arc::new(secret), config.clone()).await;
+                let name = secret.name_any();
+                if let Err(e) = reconcile(Arc::new(secret), config.clone()).await {
+                    error!("Reconciliation failed for secret {}: {:?}", name, e);
+                    has_failure = true;
+                }
             }
         }
-        Err(e) => error!("Failed to list secrets in one-shot mode: {:?}", e),
+        Err(e) => {
+            error!("Failed to list secrets in one-shot mode: {:?}", e);
+            return Err(anyhow::anyhow!("Failed to list secrets: {:?}", e));
+        }
+    }
+    if has_failure {
+        Err(anyhow::anyhow!(
+            "One or more secrets failed to reconcile in one-shot mode"
+        ))
+    } else {
+        Ok(())
     }
 }
 
