@@ -61,4 +61,4 @@ As an operator preparing a cluster migration, I want to simulate runo's executio
 ### Measurable Outcomes
 
 - **SC-001**: Zero mutating Kubernetes requests executed under `--dry-run`.
-- **SC-002**: `--one-shot` process terminates cleanly with appropriate exit code.
+- **SC-002**: `--one-shot` process terminates cleanly with exit code `0` on successful reconciliation completion, or non-zero (`1`) if an error occurs.
