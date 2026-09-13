@@ -141,6 +141,6 @@ Task: "Add integration test asserting process termination in one-shot mode in te
 
 - [x] T018 [CRITICAL] Add --one-shot CLI argument to MainArgs and wire execution dispatch in src/main.rs per FR-002 (missing)
 - [x] T019 Update run_one_shot to return Result and exit with non-zero status on failure in src/reconciler.rs and src/main.rs per SC-002 (missing)
-- [ ] T020 Add structured INFO logging for simulated secret updates under dry-run in src/secrets.rs per US2/AC1 (missing)
-- [ ] T021 Add CLI argument integration tests for --one-shot and combined --dry-run in tests/test_main.rs per Constitution III (missing)
-- [ ] T022 Execute end-to-end validation scenarios in specs/006-dry-run-oneshot/quickstart.md per T017 (missing)
+- [x] T020 Add structured INFO logging for simulated secret updates under dry-run in src/secrets.rs per US2/AC1 (missing)
+- [x] T021 Add CLI argument integration tests for --one-shot and combined --dry-run in tests/test_main.rs per Constitution III (missing)
+- [x] T022 Execute end-to-end validation scenarios in specs/006-dry-run-oneshot/quickstart.md per T017 (missing)

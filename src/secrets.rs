@@ -19,8 +19,8 @@ use crate::annotations;
 use crate::k8s::K8s;
 use std::sync::Arc;
 use std::time::SystemTime;
-use tracing::error;
 use tracing::log::debug;
+use tracing::{error, info};
 
 const FORBIDDEN_CHARS: &[char] = &['+', '?', '*', '{', '}'];
 
@@ -283,6 +283,13 @@ pub async fn update(obj: &Arc<Secret>, k8s: &K8s) -> Result<Secret, SecretUpdate
     };
     let secrets: Api<Secret> = Api::namespaced(K8s::get_client().await, &namespace);
     let updated_secret = get_updated_secret(obj)?;
+    if k8s.dry_run {
+        info!(
+            "[DRY-RUN] Would generate and apply secret {:?} in namespace {:?}",
+            obj.name_any(),
+            namespace
+        );
+    }
     match secrets
         .patch(
             &obj.name_any(),
@@ -291,8 +298,16 @@ pub async fn update(obj: &Arc<Secret>, k8s: &K8s) -> Result<Secret, SecretUpdate
         )
         .await
     {
-        Ok(_) => Ok(updated_secret),
-        Err(_) => Err(SecretUpdateError),
+        Ok(_) => {
+            if !k8s.dry_run {
+                info!("Secret {:?} updated successfully!", obj.name_any());
+            }
+            Ok(updated_secret)
+        }
+        Err(e) => {
+            error!("Failed to patch secret {:?}: {:?}", obj.name_any(), e);
+            Err(SecretUpdateError)
+        }
     }
 }
 

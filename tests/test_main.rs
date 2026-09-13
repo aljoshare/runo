@@ -89,3 +89,14 @@ fn one_shot() {
         .timeout(std::time::Duration::from_secs(3))
         .assert();
 }
+
+#[test]
+#[ignore = "requires running Kubernetes cluster"]
+fn combined_dry_run_one_shot() {
+    let mut cmd = Command::cargo_bin("runo").unwrap();
+    let _ = cmd
+        .arg("--dry-run")
+        .arg("--one-shot")
+        .timeout(std::time::Duration::from_secs(3))
+        .assert();
+}
