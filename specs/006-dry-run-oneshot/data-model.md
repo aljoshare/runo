@@ -11,13 +11,13 @@ Represents user-supplied command line arguments parsed via `clap`.
 | `http_port` | `u16` | `8080` | Port for the HTTP health and readiness server |
 | `dry_run` | `bool` | `false` | When true, executes dry-run without mutating Kubernetes objects |
 | `one_shot` | `bool` | `false` | When true, executes single reconciliation pass over secrets and exits |
-| `mode` | `Option<String>` | `None` | Deprecated execution mode (`reconciliation` vs `one-shot`) for backwards compatibility |
+| `mode` | `String` | `"reconciliation"` | Deprecated execution mode (`"reconciliation"` vs `"one-shot"`) for backwards compatibility |
 | `requeue_duration` | `u64` | `300` | Reconciliation requeue interval in seconds for daemon mode |
 
 #### Validation & Derivation Rules
 
-- If `one_shot == true` OR `mode == Some("one-shot")`: Resolved execution mode is `ExecutionMode::OneShot`.
-- If `one_shot == false` AND `mode != Some("one-shot")`: Resolved execution mode is `ExecutionMode::Daemon`.
+- If `one_shot == true` OR `mode == "one-shot"`: Resolved execution mode is `ExecutionMode::OneShot`.
+- If `one_shot == false` AND `mode != "one-shot"`: Resolved execution mode is `ExecutionMode::Daemon`.
 - If `dry_run == true`: Sets `K8s.dry_run = true` across all API calls and logs planned mutations at `INFO` level.
 
 ---
