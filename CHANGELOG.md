@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.6.0](https://github.com/aljoshare/runo/compare/v0.5.0...v0.6.0) (2026-09-13)
+
+
+### Features
+
+* **cli:** support one-shot execution mode for kubernetes jobs ([#608](https://github.com/aljoshare/runo/issues/608)) ([17d43bb](https://github.com/aljoshare/runo/commit/17d43bb728face3e86bb290051ea5e794ed018a6))
+* **secrets:** add structured logging for dry-run simulation ([#609](https://github.com/aljoshare/runo/issues/609)) ([d3dfba2](https://github.com/aljoshare/runo/commit/d3dfba20dacbb801a54726976bedf4a74c938775))
+
+
+### Bug Fixes
+
+* advisory regarding H2 ([#599](https://github.com/aljoshare/runo/issues/599)) ([66e3b14](https://github.com/aljoshare/runo/commit/66e3b14a6b96619833d76b66522320ab229c121b))
+* **clippy:** resolve clippy warnings and dead code ([#595](https://github.com/aljoshare/runo/issues/595)) ([076fbbe](https://github.com/aljoshare/runo/commit/076fbbe67fa9c2f837ba480c564b9d506af175cb))
+* **deps:** bump actions/checkout from 6.0.2 to 7.0.1 ([#580](https://github.com/aljoshare/runo/issues/580)) ([e17608d](https://github.com/aljoshare/runo/commit/e17608ddc496c6e5e42bc7af31121d0ab0a01aa3))
+* **deps:** bump actix-web from 4.14.0 to 4.15.0 ([#587](https://github.com/aljoshare/runo/issues/587)) ([0ddb9b2](https://github.com/aljoshare/runo/commit/0ddb9b2130723765decd10ce8fbb9206ac4a583c))
+* **deps:** bump clap from 4.6.5 to 4.6.6 ([#585](https://github.com/aljoshare/runo/issues/585)) ([18d0054](https://github.com/aljoshare/runo/commit/18d00544a6ea7864ed73a4f4ee051680c14558aa))
+* **deps:** bump futures from 0.3.33 to 0.3.34 ([#600](https://github.com/aljoshare/runo/issues/600)) ([caa9b7b](https://github.com/aljoshare/runo/commit/caa9b7bfa71d9a230dee4d97cf585e2101fb8bc1))
+* **deps:** bump github/codeql-action/upload-sarif from 4.36.0 to 4.37.9 ([#579](https://github.com/aljoshare/runo/issues/579)) ([244b806](https://github.com/aljoshare/runo/commit/244b80687e542dd11693b3c5c13177ab6615cdad))
+* **deps:** bump googleapis/release-please-action from 4 to 5 ([#576](https://github.com/aljoshare/runo/issues/576)) ([3ab5487](https://github.com/aljoshare/runo/commit/3ab54874cd5043365810b9e05c6b677f9c7f2157))
+* **deps:** bump rstest from 0.26.1 to 0.27.0 ([#605](https://github.com/aljoshare/runo/issues/605)) ([c83a1d9](https://github.com/aljoshare/runo/commit/c83a1d93a5933c92716537b5ea54d00f3771b648))
+* **deps:** bump thiserror from 2.0.19 to 2.0.20 ([#586](https://github.com/aljoshare/runo/issues/586)) ([4c2f968](https://github.com/aljoshare/runo/commit/4c2f968fa3447eb82734cf1655e8d1cb3440fd06))
+
 ## [0.5.0](https://github.com/aljoshare/runo/compare/v0.4.0...v0.5.0) (2026-08-01)
 
 
