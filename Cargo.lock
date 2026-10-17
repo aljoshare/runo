@@ -2140,9 +2140,9 @@ dependencies = [
 
 [[package]]
 name = "rand"
-version = "0.10.2"
+version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7f5fa3a058cd35567ef9bfa5e75732bee0f9e4c55fa90477bef2dfcdbc4be80"
+checksum = "65c9fb96cbc91e3478eaae79a69fcd3f1ae4ad052e471fe6732fff548984b4af"
 dependencies = [
  "chacha20",
  "getrandom 0.4.3",
@@ -2167,7 +2167,7 @@ version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "79e745eeef604742ec751000e44d91cdc0552aacacb2c74bee88cc7685918cfa"
 dependencies = [
- "rand 0.10.2",
+ "rand 0.10.3",
  "regex-syntax",
 ]
 
@@ -2319,7 +2319,7 @@ dependencies = [
  "futures-util",
  "k8s-openapi",
  "kube",
- "rand 0.10.2",
+ "rand 0.10.3",
  "rand_regex",
  "regex",
  "rstest",
