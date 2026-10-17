@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.6.1](https://github.com/aljoshare/runo/compare/v0.6.0...v0.6.1) (2026-10-17)
+
+
+### Bug Fixes
+
+* **deps:** bump actions/setup-python from 5 to 7 ([#604](https://github.com/aljoshare/runo/issues/604)) ([236cd2a](https://github.com/aljoshare/runo/commit/236cd2ad430a1221d3ea478896ba98eaafa41d77))
+* **deps:** bump actix-web from 4.15.0 to 4.16.0 ([#620](https://github.com/aljoshare/runo/issues/620)) ([69c1f8b](https://github.com/aljoshare/runo/commit/69c1f8b7c9bf980556d7907896e666ab47f5c6c0))
+* **deps:** bump clap from 4.6.6 to 4.6.7 ([#611](https://github.com/aljoshare/runo/issues/611)) ([df719b7](https://github.com/aljoshare/runo/commit/df719b77fca52dbd627733a949925de398cef6e0))
+* **deps:** bump github/codeql-action/upload-sarif from 4.37.9 to 4.38.3 ([#618](https://github.com/aljoshare/runo/issues/618)) ([0cff950](https://github.com/aljoshare/runo/commit/0cff95071da318f65415f373486efbfe0013565c))
+* **deps:** bump helm/kind-action from 1.14.0 to 1.15.1 ([#619](https://github.com/aljoshare/runo/issues/619)) ([dc933f8](https://github.com/aljoshare/runo/commit/dc933f89993a97933dd4658d956c2131b6e307d7))
+* **deps:** bump ossf/scorecard-action from 2.4.3 to 2.4.4 ([#603](https://github.com/aljoshare/runo/issues/603)) ([41aa79b](https://github.com/aljoshare/runo/commit/41aa79b68b0b8ba243d4ced1f1702e7cc3a4ef63))
+* **deps:** bump rand from 0.10.2 to 0.10.3 ([#614](https://github.com/aljoshare/runo/issues/614)) ([a6657ac](https://github.com/aljoshare/runo/commit/a6657acab40056a7839f42d6803fd71b7f4ea3f4))
+* **deps:** bump thiserror from 2.0.20 to 2.0.21 ([#615](https://github.com/aljoshare/runo/issues/615)) ([ef36474](https://github.com/aljoshare/runo/commit/ef3647462cfa5bf7f12f3cfbf2adb86cc5be6a5f))
+* **deps:** bump tokio from 1.53.1 to 1.53.2 ([#617](https://github.com/aljoshare/runo/issues/617)) ([5c850d5](https://github.com/aljoshare/runo/commit/5c850d5a1462c55a15802eaa105f3100ded82f5b))
+
 ## [0.6.0](https://github.com/aljoshare/runo/compare/v0.5.0...v0.6.0) (2026-09-13)
 
 
