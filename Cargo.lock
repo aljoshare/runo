@@ -21,9 +21,9 @@ dependencies = [
 
 [[package]]
 name = "actix-http"
-version = "3.13.5"
+version = "3.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86d62d1a48894ec9450bcde7ef1e3681205771ff6ea9c61cc5ae031145192787"
+checksum = "d20a22850ea7fecad12c5f8cd97d246c3af1f04ef400033977c2f13425c45816"
 dependencies = [
  "actix-codec",
  "actix-service",
@@ -122,9 +122,9 @@ dependencies = [
 
 [[package]]
 name = "actix-web"
-version = "4.16.0"
+version = "4.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "824c7250d7e468feb7903e41efc5d6883cb1f3957e8db2c3d2402a9ff430b886"
+checksum = "52840fc955d4aee19549560d06367a8a00f583e9511f66c4b387aaa0087f9a51"
 dependencies = [
  "actix-codec",
  "actix-http",
@@ -164,9 +164,9 @@ dependencies = [
 
 [[package]]
 name = "actix-web-codegen"
-version = "4.4.0"
+version = "4.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b96b09c4878563f8ab4a5fd0c59f9f0d6e0e9f60eb9b748526a0b9604fd89c50"
+checksum = "f7c9f4c52b954a73c76757a3952d3437fca00a2fbcb49704f8a6ea9f767e73f0"
 dependencies = [
  "actix-router",
  "proc-macro2",
