@@ -1,6 +1,9 @@
 report:
   junit:
     path: commala-junit.xml
+whitelist:
+  branches:
+    - "^release-please--.*"
 validate:
   author:
     email:
