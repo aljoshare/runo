@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.6.2](https://github.com/aljoshare/runo/compare/v0.6.1...v0.6.2) (2026-11-23)
+
+
+### Bug Fixes
+
+* **deps:** bump actix-web from 4.16.0 to 4.18.1 ([2cc7adf](https://github.com/aljoshare/runo/commit/2cc7adf5ee81f6e6b576955fe2544c17a38fb8e2))
+* **deps:** bump github/codeql-action/upload-sarif from 4.38.3 to 4.39.3 ([67dc612](https://github.com/aljoshare/runo/commit/67dc6129a547a7e090a95a5a1ac3655cdf08d670))
+* **deps:** bump helm/kind-action from 1.15.1 to 1.15.2 ([ac6d6db](https://github.com/aljoshare/runo/commit/ac6d6dbeabfec875c471c284fa7f5c014b9e90c3))
+* **deps:** bump k8s-openapi from 0.28.0 to 0.29.0 and kube to 5.1.0 ([8825df9](https://github.com/aljoshare/runo/commit/8825df9545767040dc2bbcdf0ebe8ca729092859))
+* **deps:** bump ossf/scorecard-action from 2.4.4 to 2.5.0 ([6e8711c](https://github.com/aljoshare/runo/commit/6e8711cc3dd8bfa056a987ac8657bde9ce255f3b))
+* **deps:** bump rstest from 0.27.0 to 0.28.0 ([66f575b](https://github.com/aljoshare/runo/commit/66f575b0d6cc4d6151c0460ec60a600fa1055e53))
+* **deps:** bump sha2 from 0.11.0 to 0.11.1 ([0600575](https://github.com/aljoshare/runo/commit/06005757482b6efe84c101b918e2bc9fcd1d26a3))
+* **deps:** bump tokio from 1.53.2 to 1.54.1 ([a20104d](https://github.com/aljoshare/runo/commit/a20104d40f9dd5d6c30ab6b82dc460d1a953e8a9))
+* **deps:** remediate RustSec security advisories ([#636](https://github.com/aljoshare/runo/issues/636)) ([484271d](https://github.com/aljoshare/runo/commit/484271d79c76aaf691b442c1bcada55a6d5ac135))
+
 ## [0.6.1](https://github.com/aljoshare/runo/compare/v0.6.0...v0.6.1) (2026-10-17)
 
 
